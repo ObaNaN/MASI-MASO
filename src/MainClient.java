@@ -1,3 +1,8 @@
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
@@ -9,7 +14,7 @@
  * @version 1.0
  */
 public class MainClient {
-
+	
     /**
      * A reference to the instance of Core, which does most of the computations
      */
@@ -25,6 +30,8 @@ public class MainClient {
     * @param args the command line arguments
     */
     public static void main(String[] args) {
+
+    	IServer rmi;
 
         try
         {
@@ -53,6 +60,19 @@ public class MainClient {
         {
             e.printStackTrace();
         }
+        
+        try {
+			rmi = (IServer)Naming.lookup("test");
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
     }
 
