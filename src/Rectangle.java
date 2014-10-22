@@ -3,8 +3,6 @@
  * and open the template in the editor.
  */
 
-
-
 /**
  * Represents a Rectangle (different from the java.awt.Rectangle)
  * @author Sam
@@ -26,6 +24,7 @@ public class Rectangle {
      * Rectangle width
      */
     public int width;
+    
 
     /**
      * Rectangle height

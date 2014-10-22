@@ -8,7 +8,7 @@
  * @author Sam
  * @version 1.0
  */
-public class SpeedRacer {
+public class MainClient {
 
     /**
      * A reference to the instance of Core, which does most of the computations
@@ -33,7 +33,7 @@ public class SpeedRacer {
                 @Override public void run() {
 
                     //Create the GUI
-                    SpeedRacer.gGUI = new GUI();
+                    MainClient.gGUI = new GUI();
 
                     //Set size and location
                     gGUI.setSize(500, 550);

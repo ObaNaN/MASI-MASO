@@ -519,7 +519,7 @@ public class GUI extends javax.swing.JFrame {
         Core.score = 0;
 
         //Initisalize the grid on the server's side
-        SpeedRacer.cCore.newGrid();
+        MainClient.cCore.newGrid();
         Core.bGameFinishing = false;
         Core.bGameInProgress = true;
 
