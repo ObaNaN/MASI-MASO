@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-
+/* This is a test*/
 /**
  * Represents a car, which is a CollidableRectangle with effect 1 (bounce)
  * @author Sam
