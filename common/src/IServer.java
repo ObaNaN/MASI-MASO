@@ -6,5 +6,5 @@ public interface IServer extends Remote{
 	
 	public void test() throws RemoteException;
 	
-
+//lalalalala
 }
