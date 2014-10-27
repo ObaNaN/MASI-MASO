@@ -62,7 +62,7 @@ public class MainClient {
         }
         
         try {
-			rmi = (IServer)Naming.lookup("test");
+			rmi = (IServer)Naming.lookup("SpeedRacer");
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
