@@ -17,7 +17,8 @@ public class ImplServer extends UnicastRemoteObject implements IServer{
 	
 	
 
-	
+	///lalalallalala
+	// :----)
 	
 	
 	
