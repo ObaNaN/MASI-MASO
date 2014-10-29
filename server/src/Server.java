@@ -6,6 +6,8 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class Server extends UnicastRemoteObject implements IServer{
 
+    private Core core;
+
     public Server() throws Exception{
             super();
 
@@ -16,7 +18,7 @@ public class Server extends UnicastRemoteObject implements IServer{
             System.out.println("Server ready");
 
             //prep the engine
-            //engine = new ServerGameEngine(25);
+            core = new Core();
     }
 
     private static void startRegistry(int RMIPortNum) throws RemoteException {
@@ -41,5 +43,10 @@ public class Server extends UnicastRemoteObject implements IServer{
             e.printStackTrace();
             System.exit(1);
         }
+    }
+
+    @Override
+    public void setGUI(IGui gui) throws RemoteException {
+        core.setGUI(gui);
     }
 }

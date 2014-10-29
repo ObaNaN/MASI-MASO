@@ -322,7 +322,7 @@ public class Gui extends javax.swing.JFrame {
     public void update(Vector<Rectangle> vDisplayRoad, Vector<Rectangle> vDisplayObstacles, Vector<Rectangle> vDisplayCars, Car myCar, int pos, int nbParticipants, boolean bGameOver, String sPosition)
     {
         //Set the player's score
-        jYourScore.setText(Core.score+"");
+        jYourScore.setText(Client.getScore()+"");
 
         //Updates the kept Car reference and extract its speed
         this.myCar = myCar;
@@ -423,7 +423,7 @@ public class Gui extends javax.swing.JFrame {
             }
 
             //If game is finished, the "Play" button can be pushed again
-            if(!Core.bGameInProgress)
+            if(!Client.isGameInProgress())
             {
                 jButton1.setEnabled(true);
             }
@@ -515,13 +515,7 @@ public class Gui extends javax.swing.JFrame {
         //The button cannot be pushed while a game is in progress
         jButton1.setEnabled(false);
 
-        //Reset the score
-        Core.score = 0;
-
-        //Initisalize the grid on the server's side
-        Client.cCore.newGrid();
-        Core.bGameFinishing = false;
-        Core.bGameInProgress = true;
+        Client.createGame();
 
     }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -531,7 +525,7 @@ public class Gui extends javax.swing.JFrame {
      */
     private void formWindowClosing(WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         // Warn the server that we closed the GUI and that it can stop
-        Core.bGameQuit = true;
+        Client.close();
 
         //Delete the GUI
         this.dispose();
@@ -544,17 +538,17 @@ public class Gui extends javax.swing.JFrame {
     private void formKeyPressed(KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
 
         //If the game is running, the car has been displayed once and we are not currently busted
-        if(Core.bGameInProgress && myCar != null && myCar.bustedTime == 0)
+        if(Client.isGameInProgress() && myCar != null && myCar.bustedTime == 0)
         {
             switch(evt.getKeyCode())
             {
-                case KeyEvent.VK_LEFT : Core.LE_P = true;   //Left arrow pressed
+                case KeyEvent.VK_LEFT : Client.setLeftPressed(true);   //Left arrow pressed
                                     break;
-                case KeyEvent.VK_RIGHT : Core.RI_P = true;  //Right arrow pressed
+                case KeyEvent.VK_RIGHT : Client.setRightPressed(true);  //Right arrow pressed
                                     break;
-                case KeyEvent.VK_UP : Core.UP_P = true;     //Up arrow pressed
+                case KeyEvent.VK_UP : Client.setUpPressed(true);     //Up arrow pressed
                                     break;
-                case KeyEvent.VK_DOWN : Core.DO_P = true;   //Down arrow pressed
+                case KeyEvent.VK_DOWN : Client.setDownPressed(true);   //Down arrow pressed
                                     break;
                 default : break;
             }
@@ -569,17 +563,17 @@ public class Gui extends javax.swing.JFrame {
     private void formKeyReleased(KeyEvent evt) {//GEN-FIRST:event_formKeyReleased
 
         //If the game is running, the car has been displayed once and we are not currently busted
-        if(Core.bGameInProgress && myCar != null && myCar.bustedTime == 0)
+        if(Client.isGameInProgress() && myCar != null && myCar.bustedTime == 0)
         {
             switch(evt.getKeyCode())
             {
-                case KeyEvent.VK_LEFT : Core.LE_P = false;  //Left arrow released
+                case KeyEvent.VK_LEFT : Client.setLeftPressed(false);  //Left arrow released
                                     break;
-                case KeyEvent.VK_RIGHT : Core.RI_P = false; //Right arrow released
+                case KeyEvent.VK_RIGHT : Client.setRightPressed(false); //Right arrow released
                                     break;
-                case KeyEvent.VK_UP : Core.UP_P = false;    //Up arrow released
+                case KeyEvent.VK_UP : Client.setUpPressed(false);    //Up arrow released
                                     break;
-                case KeyEvent.VK_DOWN : Core.DO_P = false;  //Down arrow released
+                case KeyEvent.VK_DOWN : Client.setDownPressed(false);  //Down arrow released
                                     break;
                 default : break;
             }

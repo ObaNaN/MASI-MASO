@@ -72,17 +72,17 @@ public class Core {
      * The number of competitors (not civilians)
      */
     public int iNbParticipants;
-   
+
     /**
      * Vector containing the road elements (including the obtacles)
      */
     public Vector<Rectangle>[] vTabRoad = new Vector[108];
-    
+
     /**
      * Vector containing the obstacles that must be taken into account for collision detection (thus also includes cars)
      */
     public Vector<CollidableRectangle>[] vTabObstacles = new Vector[109];
-    
+
     /**
      * Vector containing the cars
      */
@@ -92,21 +92,21 @@ public class Core {
      * Vector containing the road elements to display in the sliding window (layer 1)
      */
     public Vector<Rectangle> vDisplayRoad = new Vector<Rectangle>();
-    
+
     /**
      * Vector containing the obstacles to display in the sliding window (layer 2)
      */
     public Vector<Rectangle> vDisplayObstacles = new Vector<Rectangle>();
-    
+
     /**
      * Vector containing the cars to display in the sliding window (layer 3)
      */
     public Vector<Rectangle> vDisplayCars = new Vector<Rectangle>();
-    
+
     /**
      * A reference to the graphical user interface
      */
-    private GUI gGUI;
+    private IGui gui;
 
     /**
      * The finite state arraw representing the finite state machine
@@ -117,7 +117,7 @@ public class Core {
      * The absolute position of the police car on the y-axis
      */
     private int policePos;
-    
+
     /**
      * Used to count the time ticks (1 tick = 50ms, 20 ticks = 1 second) for score update
      */
@@ -133,14 +133,8 @@ public class Core {
      */
     private int gameMaxRunTime = 1;
 
-    
-   /**
-    * Constructor
-    * @param gGUI The reference to the graphical user interface
-    */
-    public Core(GUI gGUI)
-    {
-        this.gGUI = gGUI;
+    public void setGUI(IGui gui) {
+        this.gui = gui;
     }
 
 
@@ -153,7 +147,7 @@ public class Core {
     {
         //Memory allocation
         fsStates = new FiniteState[14];
-        
+
         //The machine has 14 states.
         //For each character in the String representation of a state,
         //  - 0 means grass
@@ -176,7 +170,7 @@ public class Core {
         fsStates[11] = new FiniteState(11,"0^1100");
         fsStates[12] = new FiniteState(12,"0011^0");
         fsStates[13] = new FiniteState(13,"001100");
-        
+
         fsStates[0].nextState = new FiniteState[3];
         fsStates[0].nextState[0] = fsStates[0];
         fsStates[0].nextState[1] = fsStates[1];
@@ -186,7 +180,7 @@ public class Core {
         fsStates[0].dStateProb[1] = 0.25;
         fsStates[0].dStateProb[2] = 0.25;
         fsStates[0].pathToRoot = fsStates[0];
-        
+
         fsStates[1].nextState = new FiniteState[4];
         fsStates[1].nextState[0] = fsStates[3];
         fsStates[1].nextState[1] = fsStates[4];
@@ -198,7 +192,7 @@ public class Core {
         fsStates[1].dStateProb[2] = 0.5;
         fsStates[1].dStateProb[3] = 0.2;
         fsStates[1].pathToRoot = fsStates[3];
-        
+
         fsStates[2].nextState = new FiniteState[4];
         fsStates[2].nextState[0] = fsStates[7];
         fsStates[2].nextState[1] = fsStates[8];
@@ -210,7 +204,7 @@ public class Core {
         fsStates[2].dStateProb[2] = 0.5;
         fsStates[2].dStateProb[3] = 0.2;
         fsStates[2].pathToRoot = fsStates[7];
-        
+
         fsStates[3].nextState = new FiniteState[3];
         fsStates[3].nextState[0] = fsStates[0];
         fsStates[3].nextState[1] = fsStates[1];
@@ -288,7 +282,7 @@ public class Core {
         fsStates[9].dStateProb[2] = 0.5;
         fsStates[9].dStateProb[3] = 0.16;
         fsStates[9].pathToRoot = fsStates[7];
-        
+
         fsStates[10].nextState = new FiniteState[3];
         fsStates[10].nextState[0] = fsStates[11];
         fsStates[10].nextState[1] = fsStates[12];
@@ -298,7 +292,7 @@ public class Core {
         fsStates[10].dStateProb[1] = 0.3;
         fsStates[10].dStateProb[2] = 0.5;
         fsStates[10].pathToRoot = fsStates[11];
-        
+
         fsStates[11].nextState = new FiniteState[4];
         fsStates[11].nextState[0] = fsStates[7];
         fsStates[11].nextState[1] = fsStates[8];
@@ -310,7 +304,7 @@ public class Core {
         fsStates[11].dStateProb[2] = 0.5;
         fsStates[11].dStateProb[3] = 0.1;
         fsStates[11].pathToRoot = fsStates[7];
-        
+
         fsStates[12].nextState = new FiniteState[4];
         fsStates[12].nextState[0] = fsStates[3];
         fsStates[12].nextState[1] = fsStates[4];
@@ -322,7 +316,7 @@ public class Core {
         fsStates[12].dStateProb[2] = 0.5;
         fsStates[12].dStateProb[3] = 0.1;
         fsStates[12].pathToRoot = fsStates[3];
-        
+
         fsStates[13].nextState = new FiniteState[3];
         fsStates[13].nextState[0] = fsStates[11];
         fsStates[13].nextState[1] = fsStates[12];
@@ -435,13 +429,13 @@ public class Core {
             long diff = lNanoTime2 - lNanoTime;
 
             System.out.println("Calibration : " + diff + ", rc = " + rc);
-            
+
             if(diff > 500000000)
                 max = rc;
             else
                 min = rc;
         }
-        
+
         return rc;
     }
 
@@ -483,10 +477,10 @@ public class Core {
                 //If we must update the game status
                 if(gameRunTime%gameMaxRunTime == 0 && bGameInProgress == true)
                 {
-                    
+
                     //Move the cars according to their speed, acceleration and to the pressed keys (for player car only)
                     moveCars(UP_P, DO_P, LE_P, RI_P, vCars);
-                    
+
                     //Manage the collisions (the finish line is a CollidableRectangle, so it also tells whether the game must end soon)
                     bGameFinishing = manageCollisions(vCars, vTabObstacles, bGameFinishing);
 
@@ -737,7 +731,7 @@ public class Core {
                 }
             }
         }
-        
+
         return bgf;
     }
 
@@ -758,7 +752,7 @@ public class Core {
     public boolean[] findHitPlace(Rectangle myCar, Rectangle rInter)
     {
         boolean[] rb = new boolean[6];
-        
+
         rb[0] = findIntersection(new Rectangle(myCar.x,myCar.y,10,21,6),rInter) != null;
         rb[1] = findIntersection(new Rectangle(myCar.x+10,myCar.y,12,21,6),rInter) != null;
         rb[2] = findIntersection(new Rectangle(myCar.x+22,myCar.y,10,21,6),rInter) != null;
@@ -768,7 +762,7 @@ public class Core {
         //rb[6] = findIntersection(new Rectangle(myCar.x,myCar.y+43,10,21,6),rInter) != null;
         //rb[7] = findIntersection(new Rectangle(myCar.x+10,myCar.y+43,12,21,6),rInter) != null;
         //rb[8] = findIntersection(new Rectangle(myCar.x+22,myCar.y+43,10,21,6),rInter) != null;
-        
+
         return rb;
     }
 
@@ -849,7 +843,7 @@ public class Core {
                 myCar.xSpeed = 0;
             }
         }
-        
+
         //We then scan the other cars
         Iterator<Car> iCars = vCars.iterator();
         while(iCars.hasNext())
@@ -908,7 +902,7 @@ public class Core {
             //The player car cannot exceed a speed of 4.64
             else if(currentCar.ySpeed > 4.5 && currentCar.Racer && currentCar.id == 6)
                 currentCar.ySpeed = (currentCar.ySpeed - 4.5)*0.8 + 4.5;
-            //The civilans will try to stay at 2.04
+                //The civilans will try to stay at 2.04
             else if(currentCar.ySpeed > 2 && !currentCar.Racer)
                 currentCar.ySpeed = (currentCar.ySpeed - 2)*0.8 + 2;
 
@@ -946,7 +940,7 @@ public class Core {
             {
                 bGameInProgress = false;
             }
-            
+
         }
     }
 
@@ -960,7 +954,7 @@ public class Core {
      * @param vDisplayCars The vector of cars to display (updated)
      */
     public void findDisplayRectangles(Vector<Rectangle>[] vTabRoad, Vector<CollidableRectangle>[] vTabObstacles, Vector<Car> vCars,
-            Vector<Rectangle> vDisplayRoad, Vector<Rectangle> vDisplayObstacles, Vector<Rectangle> vDisplayCars)
+                                      Vector<Rectangle> vDisplayRoad, Vector<Rectangle> vDisplayObstacles, Vector<Rectangle> vDisplayCars)
     {
 
         //Where is the display window?
@@ -1026,12 +1020,12 @@ public class Core {
         iSector--;
         if(iSector == 0)
             iSector = 1;
-        
+
         //Generate the vector of obstacles which can be hit by the current car
         Vector<CollidableRectangle> vCloseObstacles = new Vector<CollidableRectangle>(vTabObstacles[iSector-1]);
         vCloseObstacles.addAll(vTabObstacles[iSector]);
         vCloseObstacles.addAll(vTabObstacles[iSector+1]);
-        
+
         //Including the cars
         vCloseObstacles.addAll(vTabObstacles[108]);
 
@@ -1081,7 +1075,7 @@ public class Core {
             //Constructs a new Rectangle with this intersection (the y coordinate is relative the the reference)
             rr = new Rectangle(inter.x, inter.y-(int)reference.y,inter.width, inter.height,candidate.id);
         }
-        
+
         return rr;
     }
 
@@ -1117,17 +1111,17 @@ public class Core {
         {
             //011110
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
 
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(114,offset,172,400,1)); //Route noire
-            vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 10; i++)
             {
@@ -1159,20 +1153,20 @@ public class Core {
         {
             //0u1110
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(110,offset,44,200,0,2));  //Herbe Ã  gauche bis
+            vRoad.add(crTemp = new CollidableRectangle(110,offset,44,200,0,2));  //Herbe à gauche bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset+200,4,200,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(154,offset,4,200,3)); //Bord Ã  gauche bis
-            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset+200,4,200,3)); //Bord à gauche
+            vRoad.add(new Rectangle(154,offset,4,200,3)); //Bord à gauche bis
+            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(114,offset+200,172,200,1)); //Route noire
             vRoad.add(new Rectangle(158,offset,128,200,1)); //Route noire bis
-            vRoad.add(new Rectangle(154,offset+200,4,200,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset+200,4,200,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 5; i++)
             {
@@ -1207,20 +1201,20 @@ public class Core {
         {
             //0111u0
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset,44,200,0,2));  //Herbe Ã  droite bis
+            vRoad.add(crTemp = new CollidableRectangle(246,offset,44,200,0,2));  //Herbe à droite bis
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(242,offset,4,200,3)); //Bord Ã  droite bis
-            vRoad.add(new Rectangle(286,offset+200,4,200,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(242,offset,4,200,3)); //Bord à droite bis
+            vRoad.add(new Rectangle(286,offset+200,4,200,3)); //Bord à droite
             vRoad.add(new Rectangle(114,offset+200,172,200,1)); //Route noire
             vRoad.add(new Rectangle(114,offset,128,200,1)); //Route noire bis
-            vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset+200,4,200,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset+200,4,200,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 5; i++)
             {
@@ -1255,32 +1249,32 @@ public class Core {
         {
             //0^1110
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(110,offset+100,11,300,0,2));  //Herbe Ã  gauche bis
+            vRoad.add(crTemp = new CollidableRectangle(110,offset+100,11,300,0,2));  //Herbe à gauche bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(121,offset+150,11,250,0,2));  //Herbe Ã  gauche ter
+            vRoad.add(crTemp = new CollidableRectangle(121,offset+150,11,250,0,2));  //Herbe à gauche ter
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(132,offset+200,11,200,0,2));  //Herbe Ã  gauche quad
+            vRoad.add(crTemp = new CollidableRectangle(132,offset+200,11,200,0,2));  //Herbe à gauche quad
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(143,offset+250,11,150,0,2));  //Herbe Ã  gauche pent
+            vRoad.add(crTemp = new CollidableRectangle(143,offset+250,11,150,0,2));  //Herbe à gauche pent
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,100,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(121,offset+100,4,50,3)); //Bord Ã  gauche bis
-            vRoad.add(new Rectangle(132,offset+150,4,50,3)); //Bord Ã  gauche ter
-            vRoad.add(new Rectangle(143,offset+200,4,50,3)); //Bord Ã  gauche quad
-            vRoad.add(new Rectangle(154,offset+250,4,150,3)); //Bord Ã  gauche pent
-            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset,4,100,3)); //Bord à gauche
+            vRoad.add(new Rectangle(121,offset+100,4,50,3)); //Bord à gauche bis
+            vRoad.add(new Rectangle(132,offset+150,4,50,3)); //Bord à gauche ter
+            vRoad.add(new Rectangle(143,offset+200,4,50,3)); //Bord à gauche quad
+            vRoad.add(new Rectangle(154,offset+250,4,150,3)); //Bord à gauche pent
+            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(158,offset,128,400,1)); //Route noire
             vRoad.add(new Rectangle(147,offset,11,250,1)); //Route noire bis
             vRoad.add(new Rectangle(136,offset,11,200,1)); //Route noire ter
             vRoad.add(new Rectangle(125,offset,11,150,1)); //Route noire quad
             vRoad.add(new Rectangle(114,offset,11,100,1)); //Route noire pent
-            vRoad.add(new Rectangle(154,offset,4,240,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset,4,240,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 6; i++)
             {
@@ -1309,36 +1303,36 @@ public class Core {
         {
             //00\\\0
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(110,offset+100,11,300,0,2));  //Herbe Ã  gauche bis
+            vRoad.add(crTemp = new CollidableRectangle(110,offset+100,11,300,0,2));  //Herbe à gauche bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(121,offset+150,11,250,0,2));  //Herbe Ã  gauche ter
+            vRoad.add(crTemp = new CollidableRectangle(121,offset+150,11,250,0,2));  //Herbe à gauche ter
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(132,offset+200,11,200,0,2));  //Herbe Ã  gauche quad
+            vRoad.add(crTemp = new CollidableRectangle(132,offset+200,11,200,0,2));  //Herbe à gauche quad
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(143,offset+250,11,150,0,2));  //Herbe Ã  gauche pent
+            vRoad.add(crTemp = new CollidableRectangle(143,offset+250,11,150,0,2));  //Herbe à gauche pent
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(279,offset,11,250,0,2)); //Herbe Ã  droite bis
+            vRoad.add(crTemp = new CollidableRectangle(279,offset,11,250,0,2)); //Herbe à droite bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(268,offset,11,200,0,2)); //Herbe Ã  droite ter
+            vRoad.add(crTemp = new CollidableRectangle(268,offset,11,200,0,2)); //Herbe à droite ter
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(257,offset,11,150,0,2)); //Herbe Ã  droite quad
+            vRoad.add(crTemp = new CollidableRectangle(257,offset,11,150,0,2)); //Herbe à droite quad
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset,11,100,0,2)); //Herbe Ã  droite pent
+            vRoad.add(crTemp = new CollidableRectangle(246,offset,11,100,0,2)); //Herbe à droite pent
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,100,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(121,offset+100,4,50,3)); //Bord Ã  gauche bis
-            vRoad.add(new Rectangle(132,offset+150,4,50,3)); //Bord Ã  gauche ter
-            vRoad.add(new Rectangle(143,offset+200,4,50,3)); //Bord Ã  gauche quad
-            vRoad.add(new Rectangle(154,offset+250,4,150,3)); //Bord Ã  gauche pent
-            vRoad.add(new Rectangle(242,offset,4,100,3)); //Bord Ã  droite
-            vRoad.add(new Rectangle(253,offset+100,4,50,3)); //Bord Ã  droite bis
-            vRoad.add(new Rectangle(264,offset+150,4,50,3)); //Bord Ã  droite ter
-            vRoad.add(new Rectangle(275,offset+200,4,50,3)); //Bord Ã  droite quad
-            vRoad.add(new Rectangle(286,offset+250,4,150,3)); //Bord Ã  droite pent
+            vRoad.add(new Rectangle(110,offset,4,100,3)); //Bord à gauche
+            vRoad.add(new Rectangle(121,offset+100,4,50,3)); //Bord à gauche bis
+            vRoad.add(new Rectangle(132,offset+150,4,50,3)); //Bord à gauche ter
+            vRoad.add(new Rectangle(143,offset+200,4,50,3)); //Bord à gauche quad
+            vRoad.add(new Rectangle(154,offset+250,4,150,3)); //Bord à gauche pent
+            vRoad.add(new Rectangle(242,offset,4,100,3)); //Bord à droite
+            vRoad.add(new Rectangle(253,offset+100,4,50,3)); //Bord à droite bis
+            vRoad.add(new Rectangle(264,offset+150,4,50,3)); //Bord à droite ter
+            vRoad.add(new Rectangle(275,offset+200,4,50,3)); //Bord à droite quad
+            vRoad.add(new Rectangle(286,offset+250,4,150,3)); //Bord à droite pent
             vRoad.add(new Rectangle(114,offset,128,100,1)); //Route noire
             vRoad.add(new Rectangle(125,offset+100,128,50,1)); //Route noire bis
             vRoad.add(new Rectangle(136,offset+150,128,50,1)); //Route noire ter
@@ -1347,18 +1341,18 @@ public class Core {
 
             for(int i = 0; i < 3; i++)
             {
-                vRoad.add(new Rectangle(154,offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 1
-                vRoad.add(new Rectangle(198,offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 2
+                vRoad.add(new Rectangle(154,offset+(i*40),4,28,2)); //Séparateur témoin 1
+                vRoad.add(new Rectangle(198,offset+(i*40),4,28,2)); //Séparateur témoin 2
             }
             for(int i = 3; i < 7; i++)
             {
-                vRoad.add(new Rectangle(154+11*(i-2),offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 1
-                vRoad.add(new Rectangle(198+11*(i-2),offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 2
+                vRoad.add(new Rectangle(154+11*(i-2),offset+(i*40),4,28,2)); //Séparateur témoin 1
+                vRoad.add(new Rectangle(198+11*(i-2),offset+(i*40),4,28,2)); //Séparateur témoin 2
             }
             for(int i = 7; i < 10; i++)
             {
-                vRoad.add(new Rectangle(198,offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 1
-                vRoad.add(new Rectangle(242,offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 2
+                vRoad.add(new Rectangle(198,offset+(i*40),4,28,2)); //Séparateur témoin 1
+                vRoad.add(new Rectangle(242,offset+(i*40),4,28,2)); //Séparateur témoin 2
             }
 
 
@@ -1379,17 +1373,17 @@ public class Core {
         {
             //001110
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,154,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,154,400,0,2));  //Herbe à gauche
 
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(154,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(154,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(158,offset,128,400,1)); //Route noire
-            //vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            //vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 10; i++)
             {
@@ -1421,20 +1415,20 @@ public class Core {
         {
             //0011u0
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,154,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,154,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset+200,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset+200,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,200,0,2)); //Herbe Ã  droite bis
+            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,200,0,2)); //Herbe à droite bis
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(154,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(286,offset+200,4,200,3)); //Bord Ã  droite
-            vRoad.add(new Rectangle(242,offset,4,200,3)); //Bord Ã  droite bis
+            vRoad.add(new Rectangle(154,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(286,offset+200,4,200,3)); //Bord à droite
+            vRoad.add(new Rectangle(242,offset,4,200,3)); //Bord à droite bis
             vRoad.add(new Rectangle(158,offset,84,400,1)); //Route noire
             vRoad.add(new Rectangle(246,offset+200,40,400,1)); //Route noire bis
-            //vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset+200,4,200,2)); //SÃ©parateur tÃ©moin 3
+            //vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset+200,4,200,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 6; i++)
             {
@@ -1471,32 +1465,32 @@ public class Core {
         {
             //0111^0
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(279,offset+100,11,300,0,2));  //Herbe Ã  droite bis
+            vRoad.add(crTemp = new CollidableRectangle(279,offset+100,11,300,0,2));  //Herbe à droite bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(268,offset+150,11,250,0,2));  //Herbe Ã  droite ter
+            vRoad.add(crTemp = new CollidableRectangle(268,offset+150,11,250,0,2));  //Herbe à droite ter
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(257,offset+200,11,200,0,2));  //Herbe Ã  droite quad
+            vRoad.add(crTemp = new CollidableRectangle(257,offset+200,11,200,0,2));  //Herbe à droite quad
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset+250,11,150,0,2));  //Herbe Ã  droite pent
+            vRoad.add(crTemp = new CollidableRectangle(246,offset+250,11,150,0,2));  //Herbe à droite pent
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(275,offset+100,4,50,3)); //Bord Ã  droite bis
-            vRoad.add(new Rectangle(264,offset+150,4,50,3)); //Bord Ã  droite ter
-            vRoad.add(new Rectangle(253,offset+200,4,50,3)); //Bord Ã  droite quad
-            vRoad.add(new Rectangle(242,offset+250,4,150,3)); //Bord Ã  droite pent
-            vRoad.add(new Rectangle(286,offset,4,100,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(275,offset+100,4,50,3)); //Bord à droite bis
+            vRoad.add(new Rectangle(264,offset+150,4,50,3)); //Bord à droite ter
+            vRoad.add(new Rectangle(253,offset+200,4,50,3)); //Bord à droite quad
+            vRoad.add(new Rectangle(242,offset+250,4,150,3)); //Bord à droite pent
+            vRoad.add(new Rectangle(286,offset,4,100,3)); //Bord à droite
             vRoad.add(new Rectangle(114,offset,128,400,1)); //Route noire
             vRoad.add(new Rectangle(242,offset,11,250,1)); //Route noire bis
             vRoad.add(new Rectangle(253,offset,11,200,1)); //Route noire ter
             vRoad.add(new Rectangle(264,offset,11,150,1)); //Route noire quad
             vRoad.add(new Rectangle(275,offset,11,100,1)); //Route noire pent
-            vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset,4,240,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset,4,240,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 6; i++)
             {
@@ -1525,36 +1519,36 @@ public class Core {
         {
             //0///00
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(279,offset+100,11,300,0,2));  //Herbe Ã  droite bis
+            vRoad.add(crTemp = new CollidableRectangle(279,offset+100,11,300,0,2));  //Herbe à droite bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(268,offset+150,11,250,0,2));  //Herbe Ã  droite ter
+            vRoad.add(crTemp = new CollidableRectangle(268,offset+150,11,250,0,2));  //Herbe à droite ter
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(257,offset+200,11,200,0,2));  //Herbe Ã  droite quad
+            vRoad.add(crTemp = new CollidableRectangle(257,offset+200,11,200,0,2));  //Herbe à droite quad
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset+250,11,150,0,2));  //Herbe Ã  droite pent
+            vRoad.add(crTemp = new CollidableRectangle(246,offset+250,11,150,0,2));  //Herbe à droite pent
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(110,offset,11,250,0,2)); //Herbe Ã  gauche bis
+            vRoad.add(crTemp = new CollidableRectangle(110,offset,11,250,0,2)); //Herbe à gauche bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(121,offset,11,200,0,2)); //Herbe Ã  gauche ter
+            vRoad.add(crTemp = new CollidableRectangle(121,offset,11,200,0,2)); //Herbe à gauche ter
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(132,offset,11,150,0,2)); //Herbe Ã  gauche quad
+            vRoad.add(crTemp = new CollidableRectangle(132,offset,11,150,0,2)); //Herbe à gauche quad
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(143,offset,11,100,0,2)); //Herbe Ã  gauche pent
+            vRoad.add(crTemp = new CollidableRectangle(143,offset,11,100,0,2)); //Herbe à gauche pent
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(154,offset,4,100,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(143,offset+100,4,50,3)); //Bord Ã  gauche bis
-            vRoad.add(new Rectangle(132,offset+150,4,50,3)); //Bord Ã  gauche ter
-            vRoad.add(new Rectangle(121,offset+200,4,50,3)); //Bord Ã  gauche quad
-            vRoad.add(new Rectangle(110,offset+250,4,150,3)); //Bord Ã  gauche pent
-            vRoad.add(new Rectangle(286,offset,4,100,3)); //Bord Ã  droite
-            vRoad.add(new Rectangle(275,offset+100,4,50,3)); //Bord Ã  droite bis
-            vRoad.add(new Rectangle(264,offset+150,4,50,3)); //Bord Ã  droite ter
-            vRoad.add(new Rectangle(253,offset+200,4,50,3)); //Bord Ã  droite quad
-            vRoad.add(new Rectangle(242,offset+250,4,150,3)); //Bord Ã  droite pent
+            vRoad.add(new Rectangle(154,offset,4,100,3)); //Bord à gauche
+            vRoad.add(new Rectangle(143,offset+100,4,50,3)); //Bord à gauche bis
+            vRoad.add(new Rectangle(132,offset+150,4,50,3)); //Bord à gauche ter
+            vRoad.add(new Rectangle(121,offset+200,4,50,3)); //Bord à gauche quad
+            vRoad.add(new Rectangle(110,offset+250,4,150,3)); //Bord à gauche pent
+            vRoad.add(new Rectangle(286,offset,4,100,3)); //Bord à droite
+            vRoad.add(new Rectangle(275,offset+100,4,50,3)); //Bord à droite bis
+            vRoad.add(new Rectangle(264,offset+150,4,50,3)); //Bord à droite ter
+            vRoad.add(new Rectangle(253,offset+200,4,50,3)); //Bord à droite quad
+            vRoad.add(new Rectangle(242,offset+250,4,150,3)); //Bord à droite pent
             vRoad.add(new Rectangle(158,offset,128,100,1)); //Route noire
             vRoad.add(new Rectangle(147,offset+100,128,50,1)); //Route noire bis
             vRoad.add(new Rectangle(136,offset+150,128,50,1)); //Route noire ter
@@ -1563,18 +1557,18 @@ public class Core {
 
             for(int i = 0; i < 3; i++)
             {
-                vRoad.add(new Rectangle(198,offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 1
-                vRoad.add(new Rectangle(242,offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 2
+                vRoad.add(new Rectangle(198,offset+(i*40),4,28,2)); //Séparateur témoin 1
+                vRoad.add(new Rectangle(242,offset+(i*40),4,28,2)); //Séparateur témoin 2
             }
             for(int i = 3; i < 7; i++)
             {
-                vRoad.add(new Rectangle(198-11*(i-2),offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 1
-                vRoad.add(new Rectangle(242-11*(i-2),offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 2
+                vRoad.add(new Rectangle(198-11*(i-2),offset+(i*40),4,28,2)); //Séparateur témoin 1
+                vRoad.add(new Rectangle(242-11*(i-2),offset+(i*40),4,28,2)); //Séparateur témoin 2
             }
             for(int i = 7; i < 10; i++)
             {
-                vRoad.add(new Rectangle(154,offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 1
-                vRoad.add(new Rectangle(198,offset+(i*40),4,28,2)); //SÃ©parateur tÃ©moin 2
+                vRoad.add(new Rectangle(154,offset+(i*40),4,28,2)); //Séparateur témoin 1
+                vRoad.add(new Rectangle(198,offset+(i*40),4,28,2)); //Séparateur témoin 2
             }
 
 
@@ -1595,17 +1589,17 @@ public class Core {
         {
             //011100
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
 
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(242,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(242,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(114,offset,128,400,1)); //Route noire
-            vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            //vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            //vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 10; i++)
             {
@@ -1637,20 +1631,20 @@ public class Core {
         {
             //0u1100
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(110,offset,44,200,0,2));  //Herbe Ã  gauche bis
+            vRoad.add(crTemp = new CollidableRectangle(110,offset,44,200,0,2));  //Herbe à gauche bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset+200,4,200,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(154,offset,4,200,3)); //Bord Ã  gauche bis
-            vRoad.add(new Rectangle(242,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset+200,4,200,3)); //Bord à gauche
+            vRoad.add(new Rectangle(154,offset,4,200,3)); //Bord à gauche bis
+            vRoad.add(new Rectangle(242,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(114,offset+200,128,200,1)); //Route noire
             vRoad.add(new Rectangle(158,offset,84,200,1)); //Route noire bis
-            vRoad.add(new Rectangle(154,offset+200,4,200,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            //vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset+200,4,200,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            //vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 5; i++)
             {
@@ -1685,32 +1679,32 @@ public class Core {
         {
             //0^1100
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(110,offset+100,11,300,0,2));  //Herbe Ã  gauche bis
+            vRoad.add(crTemp = new CollidableRectangle(110,offset+100,11,300,0,2));  //Herbe à gauche bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(121,offset+150,11,250,0,2));  //Herbe Ã  gauche ter
+            vRoad.add(crTemp = new CollidableRectangle(121,offset+150,11,250,0,2));  //Herbe à gauche ter
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(132,offset+200,11,200,0,2));  //Herbe Ã  gauche quad
+            vRoad.add(crTemp = new CollidableRectangle(132,offset+200,11,200,0,2));  //Herbe à gauche quad
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(143,offset+250,11,150,0,2));  //Herbe Ã  gauche pent
+            vRoad.add(crTemp = new CollidableRectangle(143,offset+250,11,150,0,2));  //Herbe à gauche pent
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,100,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(121,offset+100,4,50,3)); //Bord Ã  gauche bis
-            vRoad.add(new Rectangle(132,offset+150,4,50,3)); //Bord Ã  gauche ter
-            vRoad.add(new Rectangle(143,offset+200,4,50,3)); //Bord Ã  gauche quad
-            vRoad.add(new Rectangle(154,offset+250,4,150,3)); //Bord Ã  gauche pent
-            vRoad.add(new Rectangle(242,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset,4,100,3)); //Bord à gauche
+            vRoad.add(new Rectangle(121,offset+100,4,50,3)); //Bord à gauche bis
+            vRoad.add(new Rectangle(132,offset+150,4,50,3)); //Bord à gauche ter
+            vRoad.add(new Rectangle(143,offset+200,4,50,3)); //Bord à gauche quad
+            vRoad.add(new Rectangle(154,offset+250,4,150,3)); //Bord à gauche pent
+            vRoad.add(new Rectangle(242,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(158,offset,84,400,1)); //Route noire
             vRoad.add(new Rectangle(147,offset,11,250,1)); //Route noire bis
             vRoad.add(new Rectangle(136,offset,11,200,1)); //Route noire ter
             vRoad.add(new Rectangle(125,offset,11,150,1)); //Route noire quad
             vRoad.add(new Rectangle(114,offset,11,100,1)); //Route noire pent
-            vRoad.add(new Rectangle(154,offset,4,240,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-           // vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset,4,240,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            // vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 6; i++)
             {
@@ -1739,32 +1733,32 @@ public class Core {
         {
             //0011^0
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,154,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,154,400,0,2));  //Herbe à gauche
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(279,offset+100,11,300,0,2));  //Herbe Ã  droite bis
+            vRoad.add(crTemp = new CollidableRectangle(279,offset+100,11,300,0,2));  //Herbe à droite bis
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(268,offset+150,11,250,0,2));  //Herbe Ã  droite ter
+            vRoad.add(crTemp = new CollidableRectangle(268,offset+150,11,250,0,2));  //Herbe à droite ter
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(257,offset+200,11,200,0,2));  //Herbe Ã  droite quad
+            vRoad.add(crTemp = new CollidableRectangle(257,offset+200,11,200,0,2));  //Herbe à droite quad
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset+250,11,150,0,2));  //Herbe Ã  droite pent
+            vRoad.add(crTemp = new CollidableRectangle(246,offset+250,11,150,0,2));  //Herbe à droite pent
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(154,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(275,offset+100,4,50,3)); //Bord Ã  droite bis
-            vRoad.add(new Rectangle(264,offset+150,4,50,3)); //Bord Ã  droite ter
-            vRoad.add(new Rectangle(253,offset+200,4,50,3)); //Bord Ã  droite quad
-            vRoad.add(new Rectangle(242,offset+250,4,150,3)); //Bord Ã  droite pent
-            vRoad.add(new Rectangle(286,offset,4,100,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(154,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(275,offset+100,4,50,3)); //Bord à droite bis
+            vRoad.add(new Rectangle(264,offset+150,4,50,3)); //Bord à droite ter
+            vRoad.add(new Rectangle(253,offset+200,4,50,3)); //Bord à droite quad
+            vRoad.add(new Rectangle(242,offset+250,4,150,3)); //Bord à droite pent
+            vRoad.add(new Rectangle(286,offset,4,100,3)); //Bord à droite
             vRoad.add(new Rectangle(158,offset,84,400,1)); //Route noire
             vRoad.add(new Rectangle(242,offset,11,250,1)); //Route noire bis
             vRoad.add(new Rectangle(253,offset,11,200,1)); //Route noire ter
             vRoad.add(new Rectangle(264,offset,11,150,1)); //Route noire quad
             vRoad.add(new Rectangle(275,offset,11,100,1)); //Route noire pent
-            //vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset,4,240,2)); //SÃ©parateur tÃ©moin 3
+            //vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset,4,240,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 6; i++)
             {
@@ -1793,17 +1787,17 @@ public class Core {
         {
             //001100
             CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,154,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,154,400,0,2));  //Herbe à gauche
 
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(246,offset,154,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(154,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(242,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(154,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(242,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(158,offset,84,400,1)); //Route noire
-            //vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            //vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            //vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            //vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 10; i++)
             {
@@ -1826,21 +1820,21 @@ public class Core {
         }
         else
         {
-            //Les autres, juste pour dÃ©bugger Ã  son aise
+            //Les autres, juste pour débugger à son aise
             System.out.println("Noting planned for ID : " + iSegmentId);
             System.exit(1);
             /*CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe Ã  gauche
+            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
 
             vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe Ã  droite
+            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
             vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord Ã  gauche
-            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord Ã  droite
+            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord à gauche
+            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord à droite
             vRoad.add(new Rectangle(114,offset,172,400,1)); //Route noire
-            vRoad.add(new Rectangle(154,offset,4,400,2)); //SÃ©parateur tÃ©moin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //SÃ©parateur tÃ©moin 2
-            vRoad.add(new Rectangle(242,offset,4,400,2)); //SÃ©parateur tÃ©moin 3
+            vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
+            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
+            vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
 
             for(int i = 0; i < 10; i++)
             {
@@ -1872,7 +1866,7 @@ public class Core {
         runTime = 0;
         gameRunTime = 0;
         gameMaxRunTime = 1;
-       
+
         //Initializes finite state machine
         initFiniteStateMachine();
         FiniteState currentState = fsStates[0];

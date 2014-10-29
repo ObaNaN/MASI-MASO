@@ -1,5 +1,12 @@
-/**
- * Created by paul-henri on 10/27/14.
- */
-public interface IGui {
+import java.rmi.Remote;
+
+public interface IGui extends Remote {
+    public void update() throws java.rmi.RemoteException;
+
+    public void normalDisplayMode() throws java.rmi.RemoteException;
+
+    public void noMarkedDisplayMode() throws java.rmi.RemoteException;
+
+    public void markedAsOriginalDisplayMode() throws java.rmi.RemoteException;
+
 }
