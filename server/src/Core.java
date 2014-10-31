@@ -3,6 +3,7 @@
  * and open the template in the editor.
  */
 
+import java.rmi.RemoteException;
 import java.util.Vector;
 import java.util.Iterator;
 
@@ -456,7 +457,12 @@ public class Core {
         newGrid();
 
         iTickDelay = computeTickValueForCurrentSystem();
-        gGUI.jButton1.setEnabled(true);
+
+        try {
+            gui.setPlayButtonEnabled(true);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
 
         //Initializes the game status booleans
         bGameQuit = false;
@@ -515,13 +521,7 @@ public class Core {
                         iFinalPosition = pos;
                     }
 
-                    //Ask the GUI to perform its update
-                    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
-                        @Override public void run() {
-                            gGUI.update(vDisplayRoad, vDisplayObstacles, vDisplayCars, vCars.elementAt(0), iFinalPosition, iNbParticipants, bGameFinishing, sFinalPosition);
-                        }
-                    });
-
+                    gui.update(vDisplayRoad, vDisplayObstacles, vDisplayCars, vCars.elementAt(0), iFinalPosition, iNbParticipants, bGameFinishing, sFinalPosition);
                 }
 
                 //The score updates every second if the game is running by adding the square of the current player car speed
@@ -543,7 +543,7 @@ public class Core {
     /**
      * Manages the collisions
      * @param Cars The vector of cars (which are the actors of the collision)
-     * @param vObstacles The vector of obstacles (which are passively collided). Also contains the cars
+     * @param vTabObstacles The vector of obstacles (which are passively collided). Also contains the cars
      * @param bGameFinishing True if the finish line has been passed
      * @return True if the finish line has just been passed. False otherwise
      */
@@ -946,8 +946,8 @@ public class Core {
 
     /**
      * Extracts the visible rectangles to display according to the player's car position and speed
-     * @param vRoad The vector of road elements
-     * @param vObstacles The vector of obstacles
+     * @param vTabRoad The vector of road elements
+     * @param vTabObstacles The vector of obstacles
      * @param vCars The vector of cars
      * @param vDisplayRoad The vector of road elements to display (updated)
      * @param vDisplayObstacles The vector of collision warning rectagles (updated)
@@ -1081,8 +1081,8 @@ public class Core {
 
     /**
      * Uses the randomly selected state to generate a new road segment of size 400x400
-     * @param vRoad The vector of road elements (updated)
-     * @param vObstacles The vector of obstacles (updated)
+     * @param vTabRoad The vector of road elements (updated)
+     * @param vTabObstacles The vector of obstacles (updated)
      * @param iSegmentId The id of the state that were randomly selected by the finite state machine
      * @param offset The offset to apply to the 400x400 segment on the y axis
      */
@@ -1856,7 +1856,6 @@ public class Core {
         }
     }
 
-
     /**
      * Initializes the game state (generates the road, the obstacles, the cars)
      */
@@ -1972,4 +1971,12 @@ public class Core {
 
     }
 
+    public void createGame() {
+        Core.score = 0;
+
+        //Initisalize the grid on the server's side
+        newGrid();
+        Core.bGameFinishing = false;
+        Core.bGameInProgress = true;
+    }
 }

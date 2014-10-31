@@ -9,16 +9,6 @@ public interface IServer extends Remote{
     public int getScore() throws RemoteException;
     public boolean isGameInProgress() throws RemoteException;
 
-    /**
-     * //Reset the score
-     Core.score = 0;
-
-     //Initisalize the grid on the server's side
-     Client.cCore.newGrid();
-     Core.bGameFinishing = false;
-     Core.bGameInProgress = true;
-     * @throws RemoteException
-     */
     public void createGame() throws RemoteException;
 
     public void close(IGui gui) throws RemoteException;

@@ -3,12 +3,14 @@
  * and open the template in the editor.
  */
 
+import java.io.Serializable;
+
 /**
  * Represents a Rectangle (different from the java.awt.Rectangle)
  * @author Sam
  * @version 1.0
  */
-public class Rectangle {
+public class Rectangle implements Serializable{
 
     /**
      * Rectangle position on the x-axis

@@ -44,11 +44,14 @@ public class Gui extends javax.swing.JFrame {
      */
     public Car myCar;
 
+    public IGameEngine engine;
+
     /**
      * Constructor
      */
-    public Gui()
+    public Gui(IGameEngine engine)
     {
+        this.engine = engine;
         //Calls the private method which initializes the panels, the buttons, etc...
         initComponents();
 
@@ -322,7 +325,7 @@ public class Gui extends javax.swing.JFrame {
     public void update(Vector<Rectangle> vDisplayRoad, Vector<Rectangle> vDisplayObstacles, Vector<Rectangle> vDisplayCars, Car myCar, int pos, int nbParticipants, boolean bGameOver, String sPosition)
     {
         //Set the player's score
-        jYourScore.setText(Client.getScore()+"");
+        jYourScore.setText(this.engine.getScore()+"");
 
         //Updates the kept Car reference and extract its speed
         this.myCar = myCar;
@@ -423,7 +426,7 @@ public class Gui extends javax.swing.JFrame {
             }
 
             //If game is finished, the "Play" button can be pushed again
-            if(!Client.isGameInProgress())
+            if(!this.engine.isGameInProgress())
             {
                 jButton1.setEnabled(true);
             }
@@ -515,7 +518,7 @@ public class Gui extends javax.swing.JFrame {
         //The button cannot be pushed while a game is in progress
         jButton1.setEnabled(false);
 
-        Client.createGame();
+        this.engine.createGame();
 
     }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -525,7 +528,7 @@ public class Gui extends javax.swing.JFrame {
      */
     private void formWindowClosing(WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         // Warn the server that we closed the GUI and that it can stop
-        Client.close();
+        this.engine.close();
 
         //Delete the GUI
         this.dispose();
@@ -538,17 +541,17 @@ public class Gui extends javax.swing.JFrame {
     private void formKeyPressed(KeyEvent evt) {//GEN-FIRST:event_formKeyPressed
 
         //If the game is running, the car has been displayed once and we are not currently busted
-        if(Client.isGameInProgress() && myCar != null && myCar.bustedTime == 0)
+        if(this.engine.isGameInProgress() && myCar != null && myCar.bustedTime == 0)
         {
             switch(evt.getKeyCode())
             {
-                case KeyEvent.VK_LEFT : Client.setLeftPressed(true);   //Left arrow pressed
+                case KeyEvent.VK_LEFT : this.engine.setLeftPressed(true);   //Left arrow pressed
                                     break;
-                case KeyEvent.VK_RIGHT : Client.setRightPressed(true);  //Right arrow pressed
+                case KeyEvent.VK_RIGHT : this.engine.setRightPressed(true);  //Right arrow pressed
                                     break;
-                case KeyEvent.VK_UP : Client.setUpPressed(true);     //Up arrow pressed
+                case KeyEvent.VK_UP : this.engine.setUpPressed(true);     //Up arrow pressed
                                     break;
-                case KeyEvent.VK_DOWN : Client.setDownPressed(true);   //Down arrow pressed
+                case KeyEvent.VK_DOWN : this.engine.setDownPressed(true);   //Down arrow pressed
                                     break;
                 default : break;
             }
@@ -563,17 +566,17 @@ public class Gui extends javax.swing.JFrame {
     private void formKeyReleased(KeyEvent evt) {//GEN-FIRST:event_formKeyReleased
 
         //If the game is running, the car has been displayed once and we are not currently busted
-        if(Client.isGameInProgress() && myCar != null && myCar.bustedTime == 0)
+        if(this.engine.isGameInProgress() && myCar != null && myCar.bustedTime == 0)
         {
             switch(evt.getKeyCode())
             {
-                case KeyEvent.VK_LEFT : Client.setLeftPressed(false);  //Left arrow released
+                case KeyEvent.VK_LEFT : this.engine.setLeftPressed(false);  //Left arrow released
                                     break;
-                case KeyEvent.VK_RIGHT : Client.setRightPressed(false); //Right arrow released
+                case KeyEvent.VK_RIGHT : this.engine.setRightPressed(false); //Right arrow released
                                     break;
-                case KeyEvent.VK_UP : Client.setUpPressed(false);    //Up arrow released
+                case KeyEvent.VK_UP : this.engine.setUpPressed(false);    //Up arrow released
                                     break;
-                case KeyEvent.VK_DOWN : Client.setDownPressed(false);  //Down arrow released
+                case KeyEvent.VK_DOWN : this.engine.setDownPressed(false);  //Down arrow released
                                     break;
                 default : break;
             }
