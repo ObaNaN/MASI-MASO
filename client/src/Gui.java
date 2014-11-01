@@ -37,7 +37,7 @@ public class Gui extends javax.swing.JFrame {
     /**
      * The doubleBuffered JPanel which contains the BufferedImage
      */
-    public myJPanel jpBoard;
+    public MyJPanel jpBoard;
 
     /**
      * A copy of the instance of the car that the player controls
@@ -59,7 +59,7 @@ public class Gui extends javax.swing.JFrame {
         image = new BufferedImage(400, 400, BufferedImage.TYPE_INT_ARGB);
 
         //Creation of the JPanel
-        jpBoard = new myJPanel(true,image);
+        jpBoard = new MyJPanel(true,image);
         jpBoard.setMinimumSize(new Dimension(400, 400));
         jpBoard.setPreferredSize(new Dimension(400, 400));
 

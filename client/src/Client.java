@@ -1,6 +1,7 @@
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.UUID;
 import java.util.Vector;
 
 public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
@@ -8,6 +9,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     private Gui gui;
     private IServer server;
     private String serverAddress;
+    private UUID uuid;
 
     public Client(String serverAddress) throws java.rmi.RemoteException {
         super();
@@ -36,15 +38,16 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void registerClient(IGui clientGUI){
         try {
-            server.registerClient(clientGUI);
+            this.uuid = server.registerClient(clientGUI);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
     public int getScore(){
         try {
-            return server.getScore();
+            return server.getScore(uuid);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -54,7 +57,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public boolean isGameInProgress() {
         try {
-            return server.isGameInProgress();
+            return server.isGameInProgress(uuid);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -64,7 +67,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void createGame() {
         try {
-            server.createGame();
+            server.createGame(uuid);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -73,7 +76,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void close() {
         try {
-            server.close(this);
+            server.close(uuid);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -82,7 +85,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void setLeftPressed(boolean pressed) {
         try {
-            server.setLeftPressed(pressed);
+            server.setLeftPressed(uuid, pressed);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -91,7 +94,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void setRightPressed(boolean pressed) {
         try {
-            server.setRightPressed(pressed);
+            server.setRightPressed(uuid, pressed);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -100,7 +103,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void setUpPressed(boolean pressed) {
         try {
-            server.setUpPressed(pressed);
+            server.setUpPressed(uuid, pressed);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -109,7 +112,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void setDownPressed(boolean pressed) {
         try {
-            server.setDownPressed(pressed);
+            server.setDownPressed(uuid, pressed);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -134,22 +137,6 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void setPlayButtonEnabled(boolean enabled) throws RemoteException {
         gui.jButton1.setEnabled(enabled);
-    }
-
-    @Override
-    public void normalDisplayMode() throws RemoteException {
-        //TODO
-    }
-
-    @Override
-    public void noMarkedDisplayMode() throws RemoteException {
-        //TODO
-
-    }
-
-    @Override
-    public void markedAsOriginalDisplayMode() throws RemoteException {
-        //TODO
     }
 
     public static void main(String[] args) {
