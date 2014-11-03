@@ -2,30 +2,33 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
+import java.util.UUID;
 
 
 public class Server extends UnicastRemoteObject implements IServer{
 
-    private Core core;
+    private Core currentCore;
+    private int playersCountPerGame;
+    private HashMap<UUID, Player> playersByUuid;
 
-    public Server() throws Exception{
-            super();
+    public Server(int playersCountPerGame) throws Exception{
+        super();
+        this.playersCountPerGame = playersCountPerGame;
+        //register with RMIReg
+        startRegistry(1099);
+        playersByUuid = new HashMap<>();
+        java.rmi.Naming.rebind("//localhost/SRGameServer", this);
 
-            //register with RMIReg
-            startRegistry(1099);
-            java.rmi.Naming.rebind("//localhost/SRGameServer", (IServer) this);
-
-            System.out.println("Server ready");
-
-            //prep the engine
-            core = new Core();
+        System.out.println("Server ready");
     }
 
-    private static void startRegistry(int RMIPortNum) throws RemoteException {
+    private void startRegistry(int RMIPortNum) throws RemoteException {
         try {
             Registry registry =
                     LocateRegistry.getRegistry(RMIPortNum);
             registry.list();
+
             // This call will throw an exception
             // if the registry does not already exist
         } catch (RemoteException e) {
@@ -36,8 +39,18 @@ public class Server extends UnicastRemoteObject implements IServer{
     }
 
 	public static void main(String[] args) {
+        int playersCount = 4;
+
+        if (args.length == 1){
+            try{
+                playersCount = Integer.parseInt(args[0]);
+            } catch(Exception e){
+                System.out.println("Invalid number");
+            }
+        }
+
         try {
-            new Server();
+            new Server(playersCount);
         } catch (Exception e) {
             System.out.println("Fatal: " + e);
             e.printStackTrace();
@@ -46,53 +59,61 @@ public class Server extends UnicastRemoteObject implements IServer{
     }
 
     @Override
-    public void setGUI(IGui gui) throws RemoteException {
-        core.setGUI(gui);
+    public UUID registerClient(IGui clientGui) throws RemoteException {
+
+        if(currentCore == null)
+            currentCore = new Core();
+        Player newPlayer =  new Player(clientGui, currentCore);
+        UUID newUuid = UUID.randomUUID();
+        currentCore.addPlayer(newPlayer);
+        playersByUuid.put(newUuid, newPlayer);
+
+        if(currentCore.getPlayersCount() == playersCountPerGame){
+            Thread t =  new Thread(currentCore);
+            t.start();
+            currentCore = null;
+        }
+
+        return newUuid;
     }
 
     @Override
-    public void registerClient(IGui clientGUI) throws RemoteException {
-        core.setGUI(clientGUI);
-        core.runGame();
+    public int getScore(UUID uuid) throws RemoteException {
+        return playersByUuid.get(uuid).getScore();
     }
 
     @Override
-    public int getScore() throws RemoteException {
-        return Core.score;
+    public boolean isGameInProgress(UUID uuid) throws RemoteException {
+        return playersByUuid.get(uuid).isGameInProgress();
     }
 
     @Override
-    public boolean isGameInProgress() throws RemoteException {
-        return Core.bGameInProgress;
+    public void createGame(UUID uuid) throws RemoteException {
+        playersByUuid.get(uuid).setReadyToStart(true);
     }
 
     @Override
-    public void createGame() throws RemoteException {
-        core.createGame();
+    public void close(UUID uuid) throws RemoteException {
+        playersByUuid.get(uuid).getCore().removePlayer(playersByUuid.get(uuid));
     }
 
     @Override
-    public void close(IGui gui) throws RemoteException {
-        Core.bGameQuit = false;
+    public void setLeftPressed(UUID uuid, boolean pressed) throws RemoteException {
+        playersByUuid.get(uuid).setLeftPressed(pressed);
     }
 
     @Override
-    public void setLeftPressed(boolean pressed) throws RemoteException {
-        Core.LE_P = pressed;
+    public void setRightPressed(UUID uuid, boolean pressed) throws RemoteException {
+        playersByUuid.get(uuid).setRightPressed(pressed);
     }
 
     @Override
-    public void setRightPressed(boolean pressed) throws RemoteException {
-        Core.RI_P = pressed;
+    public void setUpPressed(UUID uuid, boolean pressed) throws RemoteException {
+        playersByUuid.get(uuid).setUpPressed(pressed);
     }
 
     @Override
-    public void setUpPressed(boolean pressed) throws RemoteException {
-        Core.UP_P = pressed;
-    }
-
-    @Override
-    public void setDownPressed(boolean pressed) throws RemoteException {
-        Core.DO_P = pressed;
+    public void setDownPressed(UUID uuid, boolean pressed) throws RemoteException {
+        playersByUuid.get(uuid).setDownPressed(pressed);
     }
 }

@@ -3,7 +3,6 @@
  * and open the template in the editor.
  */
 
-import java.rmi.RemoteException;
 import java.util.Vector;
 import java.util.Iterator;
 
@@ -12,107 +11,47 @@ import java.util.Iterator;
  * @author Sam
  * @version 1.0
  */
-public class Core {
-
-    /**
-     * The player's score
-     */
-    public static int score = 0;
+public class Core implements Runnable{
 
     /**
      * The delay in ms between two loops
      */
-    public int iTickDelay = 30;
+    private int tickDelay;
 
     /**
      * True if the finish line has been passed. False otherwise
      */
-    public static boolean bGameFinishing = false;
+    private boolean gameFinishing;
 
     /**
      * True if the player is currently playing. False otherwise
      */
-    public static boolean bGameInProgress = false;
-
-    /**
-     * True if the GUI is closing. False otherwise
-     */
-    public static boolean bGameQuit = false;
-
-    /**
-     * True if the player is pressing the up arrow key
-     */
-    public static boolean UP_P = false;
-
-    /**
-     * True if the player is pressing the down arrow key
-     */
-    public static boolean DO_P = false;
-
-    /**
-     * True if the player is pressing the right arrow key
-     */
-    public static boolean RI_P = false;
-
-    /**
-     * True if the player is pressing the left arrow key
-     */
-    public static boolean LE_P = false;
-
-    /**
-     * The string representing the final position (rank) of the player after passing the finish line
-     */
-    public String sFinalPosition;
-
-    /**
-     * Integer representation of the final position (rank) of the player after passing the finish line
-     */
-    public int iFinalPosition;
+    private boolean gameInProgress;
 
     /**
      * The number of competitors (not civilians)
      */
-    public int iNbParticipants;
+    private int nbParticipants;
 
     /**
-     * Vector containing the road elements (including the obtacles)
+     * Vector containing the road elements (including the obstacles)
      */
-    public Vector<Rectangle>[] vTabRoad = new Vector[108];
+    private Vector<Rectangle>[] tabRoad;
 
     /**
      * Vector containing the obstacles that must be taken into account for collision detection (thus also includes cars)
      */
-    public Vector<CollidableRectangle>[] vTabObstacles = new Vector[109];
+    private Vector<CollidableRectangle>[] tabObstacles;
 
     /**
      * Vector containing the cars
      */
-    public Vector<Car> vCars = new Vector<Car>();
+    private Vector<Car> cars;
 
     /**
-     * Vector containing the road elements to display in the sliding window (layer 1)
+     * The finite state array representing the finite state machine
      */
-    public Vector<Rectangle> vDisplayRoad = new Vector<Rectangle>();
-
-    /**
-     * Vector containing the obstacles to display in the sliding window (layer 2)
-     */
-    public Vector<Rectangle> vDisplayObstacles = new Vector<Rectangle>();
-
-    /**
-     * Vector containing the cars to display in the sliding window (layer 3)
-     */
-    public Vector<Rectangle> vDisplayCars = new Vector<Rectangle>();
-
-    /**
-     * A reference to the graphical user interface
-     */
-    private IGui gui;
-
-    /**
-     * The finite state arraw representing the finite state machine
-     */
-    private FiniteState[] fsStates;
+    private FiniteState[] states;
 
     /**
      * The absolute position of the police car on the y-axis
@@ -122,32 +61,49 @@ public class Core {
     /**
      * Used to count the time ticks (1 tick = 50ms, 20 ticks = 1 second) for score update
      */
-    private int runTime = 0;
+    private int runTime;
 
     /**
      * Same as above, but for game updates
      */
-    private int gameRunTime = 0;
+    private int gameRunTime;
 
     /**
      * Tells the frequency of updates (gameMaxRunTime = X means one update every X ticks)
      */
-    private int gameMaxRunTime = 1;
+    private int gameMaxRunTime;
 
-    public void setGUI(IGui gui) {
-        this.gui = gui;
+    private int playersCount;
+
+    private int connectedPlayersCount;
+
+    public Core(){
+
+        tickDelay = 30;
+        gameFinishing = false;
+        gameInProgress = false;
+        tabRoad = new Vector[108];
+        tabObstacles = new Vector[109];
+        cars = new Vector<>();
+        runTime = 0;
+        gameRunTime = 0;
+        gameMaxRunTime = 1;
+        playersCount = 0;
     }
 
+    public boolean isGameInProgress() {
+        return gameInProgress;
+    }
 
     /**
-     * Initializes the finite state machine and stores it in fsStates[].
+     * Initializes the finite state machine and stores it in states[].
      * The probability to reach one state is given in such a way that the straight lines are preferred over the curves and appearing/disappeaing road segments.
      * The sum of probabilities must be (at least (for computational reasons); exactly equal to (for logical reasons)) 1 for each state
      */
     void initFiniteStateMachine()
     {
         //Memory allocation
-        fsStates = new FiniteState[14];
+        states = new FiniteState[14];
 
         //The machine has 14 states.
         //For each character in the String representation of a state,
@@ -157,176 +113,176 @@ public class Core {
         //  - ^ means the grass becoms road at the middle
         //  - \ means the road turns left (doubled due to character escaping)
         //  - / means the road turns right
-        fsStates[0] = new FiniteState(0,"011110");
-        fsStates[1] = new FiniteState(1,"0u1110");
-        fsStates[2] = new FiniteState(2,"0111u0");
-        fsStates[3] = new FiniteState(3,"0^1110");
-        fsStates[4] = new FiniteState(4,"00\\\\\\0");
-        fsStates[5] = new FiniteState(5,"001110");
-        fsStates[6] = new FiniteState(6,"0011u0");
-        fsStates[7] = new FiniteState(7,"0111^0");
-        fsStates[8] = new FiniteState(8,"0///00");
-        fsStates[9] = new FiniteState(9,"011100");
-        fsStates[10] = new FiniteState(10,"0u1100");
-        fsStates[11] = new FiniteState(11,"0^1100");
-        fsStates[12] = new FiniteState(12,"0011^0");
-        fsStates[13] = new FiniteState(13,"001100");
+        states[0] = new FiniteState(0,"011110");
+        states[1] = new FiniteState(1,"0u1110");
+        states[2] = new FiniteState(2,"0111u0");
+        states[3] = new FiniteState(3,"0^1110");
+        states[4] = new FiniteState(4,"00\\\\\\0");
+        states[5] = new FiniteState(5,"001110");
+        states[6] = new FiniteState(6,"0011u0");
+        states[7] = new FiniteState(7,"0111^0");
+        states[8] = new FiniteState(8,"0///00");
+        states[9] = new FiniteState(9,"011100");
+        states[10] = new FiniteState(10,"0u1100");
+        states[11] = new FiniteState(11,"0^1100");
+        states[12] = new FiniteState(12,"0011^0");
+        states[13] = new FiniteState(13,"001100");
 
-        fsStates[0].nextState = new FiniteState[3];
-        fsStates[0].nextState[0] = fsStates[0];
-        fsStates[0].nextState[1] = fsStates[1];
-        fsStates[0].nextState[2] = fsStates[2];
-        fsStates[0].dStateProb = new double[3];
-        fsStates[0].dStateProb[0] = 0.5;
-        fsStates[0].dStateProb[1] = 0.25;
-        fsStates[0].dStateProb[2] = 0.25;
-        fsStates[0].pathToRoot = fsStates[0];
+        states[0].nextState = new FiniteState[3];
+        states[0].nextState[0] = states[0];
+        states[0].nextState[1] = states[1];
+        states[0].nextState[2] = states[2];
+        states[0].dStateProb = new double[3];
+        states[0].dStateProb[0] = 0.5;
+        states[0].dStateProb[1] = 0.25;
+        states[0].dStateProb[2] = 0.25;
+        states[0].pathToRoot = states[0];
 
-        fsStates[1].nextState = new FiniteState[4];
-        fsStates[1].nextState[0] = fsStates[3];
-        fsStates[1].nextState[1] = fsStates[4];
-        fsStates[1].nextState[2] = fsStates[5];
-        fsStates[1].nextState[3] = fsStates[6];
-        fsStates[1].dStateProb = new double[4];
-        fsStates[1].dStateProb[0] = 0.1;
-        fsStates[1].dStateProb[1] = 0.2;
-        fsStates[1].dStateProb[2] = 0.5;
-        fsStates[1].dStateProb[3] = 0.2;
-        fsStates[1].pathToRoot = fsStates[3];
+        states[1].nextState = new FiniteState[4];
+        states[1].nextState[0] = states[3];
+        states[1].nextState[1] = states[4];
+        states[1].nextState[2] = states[5];
+        states[1].nextState[3] = states[6];
+        states[1].dStateProb = new double[4];
+        states[1].dStateProb[0] = 0.1;
+        states[1].dStateProb[1] = 0.2;
+        states[1].dStateProb[2] = 0.5;
+        states[1].dStateProb[3] = 0.2;
+        states[1].pathToRoot = states[3];
 
-        fsStates[2].nextState = new FiniteState[4];
-        fsStates[2].nextState[0] = fsStates[7];
-        fsStates[2].nextState[1] = fsStates[8];
-        fsStates[2].nextState[2] = fsStates[9];
-        fsStates[2].nextState[3] = fsStates[10];
-        fsStates[2].dStateProb = new double[4];
-        fsStates[2].dStateProb[0] = 0.1;
-        fsStates[2].dStateProb[1] = 0.2;
-        fsStates[2].dStateProb[2] = 0.5;
-        fsStates[2].dStateProb[3] = 0.2;
-        fsStates[2].pathToRoot = fsStates[7];
+        states[2].nextState = new FiniteState[4];
+        states[2].nextState[0] = states[7];
+        states[2].nextState[1] = states[8];
+        states[2].nextState[2] = states[9];
+        states[2].nextState[3] = states[10];
+        states[2].dStateProb = new double[4];
+        states[2].dStateProb[0] = 0.1;
+        states[2].dStateProb[1] = 0.2;
+        states[2].dStateProb[2] = 0.5;
+        states[2].dStateProb[3] = 0.2;
+        states[2].pathToRoot = states[7];
 
-        fsStates[3].nextState = new FiniteState[3];
-        fsStates[3].nextState[0] = fsStates[0];
-        fsStates[3].nextState[1] = fsStates[1];
-        fsStates[3].nextState[2] = fsStates[2];
-        fsStates[3].dStateProb = new double[3];
-        fsStates[3].dStateProb[0] = 0.5;
-        fsStates[3].dStateProb[1] = 0.2;
-        fsStates[3].dStateProb[2] = 0.3;
-        fsStates[3].pathToRoot = fsStates[0];
+        states[3].nextState = new FiniteState[3];
+        states[3].nextState[0] = states[0];
+        states[3].nextState[1] = states[1];
+        states[3].nextState[2] = states[2];
+        states[3].dStateProb = new double[3];
+        states[3].dStateProb[0] = 0.5;
+        states[3].dStateProb[1] = 0.2;
+        states[3].dStateProb[2] = 0.3;
+        states[3].pathToRoot = states[0];
 
-        fsStates[4].nextState = new FiniteState[4];
-        fsStates[4].nextState[0] = fsStates[7];
-        fsStates[4].nextState[1] = fsStates[8];
-        fsStates[4].nextState[2] = fsStates[9];
-        fsStates[4].nextState[3] = fsStates[10];
-        fsStates[4].dStateProb = new double[4];
-        fsStates[4].dStateProb[0] = 0.1;
-        fsStates[4].dStateProb[1] = 0.2;
-        fsStates[4].dStateProb[2] = 0.5;
-        fsStates[4].dStateProb[3] = 0.2;
-        fsStates[4].pathToRoot = fsStates[7];
+        states[4].nextState = new FiniteState[4];
+        states[4].nextState[0] = states[7];
+        states[4].nextState[1] = states[8];
+        states[4].nextState[2] = states[9];
+        states[4].nextState[3] = states[10];
+        states[4].dStateProb = new double[4];
+        states[4].dStateProb[0] = 0.1;
+        states[4].dStateProb[1] = 0.2;
+        states[4].dStateProb[2] = 0.5;
+        states[4].dStateProb[3] = 0.2;
+        states[4].pathToRoot = states[7];
 
-        fsStates[5].nextState = new FiniteState[4];
-        fsStates[5].nextState[0] = fsStates[3];
-        fsStates[5].nextState[1] = fsStates[4];
-        fsStates[5].nextState[2] = fsStates[5];
-        fsStates[5].nextState[3] = fsStates[6];
-        fsStates[5].dStateProb = new double[4];
-        fsStates[5].dStateProb[0] = 0.17;
-        fsStates[5].dStateProb[1] = 0.17;
-        fsStates[5].dStateProb[2] = 0.5;
-        fsStates[5].dStateProb[3] = 0.16;
-        fsStates[5].pathToRoot = fsStates[3];
+        states[5].nextState = new FiniteState[4];
+        states[5].nextState[0] = states[3];
+        states[5].nextState[1] = states[4];
+        states[5].nextState[2] = states[5];
+        states[5].nextState[3] = states[6];
+        states[5].dStateProb = new double[4];
+        states[5].dStateProb[0] = 0.17;
+        states[5].dStateProb[1] = 0.17;
+        states[5].dStateProb[2] = 0.5;
+        states[5].dStateProb[3] = 0.16;
+        states[5].pathToRoot = states[3];
 
-        fsStates[6].nextState = new FiniteState[3];
-        fsStates[6].nextState[0] = fsStates[11];
-        fsStates[6].nextState[1] = fsStates[12];
-        fsStates[6].nextState[2] = fsStates[13];
-        fsStates[6].dStateProb = new double[3];
-        fsStates[6].dStateProb[0] = 0.3;
-        fsStates[6].dStateProb[1] = 0.2;
-        fsStates[6].dStateProb[2] = 0.5;
-        fsStates[6].pathToRoot = fsStates[11];
+        states[6].nextState = new FiniteState[3];
+        states[6].nextState[0] = states[11];
+        states[6].nextState[1] = states[12];
+        states[6].nextState[2] = states[13];
+        states[6].dStateProb = new double[3];
+        states[6].dStateProb[0] = 0.3;
+        states[6].dStateProb[1] = 0.2;
+        states[6].dStateProb[2] = 0.5;
+        states[6].pathToRoot = states[11];
 
-        fsStates[7].nextState = new FiniteState[3];
-        fsStates[7].nextState[0] = fsStates[0];
-        fsStates[7].nextState[1] = fsStates[1];
-        fsStates[7].nextState[2] = fsStates[2];
-        fsStates[7].dStateProb = new double[3];
-        fsStates[7].dStateProb[0] = 0.5;
-        fsStates[7].dStateProb[1] = 0.3;
-        fsStates[7].dStateProb[2] = 0.2;
-        fsStates[7].pathToRoot = fsStates[0];
+        states[7].nextState = new FiniteState[3];
+        states[7].nextState[0] = states[0];
+        states[7].nextState[1] = states[1];
+        states[7].nextState[2] = states[2];
+        states[7].dStateProb = new double[3];
+        states[7].dStateProb[0] = 0.5;
+        states[7].dStateProb[1] = 0.3;
+        states[7].dStateProb[2] = 0.2;
+        states[7].pathToRoot = states[0];
 
-        fsStates[8].nextState = new FiniteState[4];
-        fsStates[8].nextState[0] = fsStates[3];
-        fsStates[8].nextState[1] = fsStates[4];
-        fsStates[8].nextState[2] = fsStates[5];
-        fsStates[8].nextState[3] = fsStates[6];
-        fsStates[8].dStateProb = new double[4];
-        fsStates[8].dStateProb[0] = 0.2;
-        fsStates[8].dStateProb[1] = 0.1;
-        fsStates[8].dStateProb[2] = 0.5;
-        fsStates[8].dStateProb[3] = 0.2;
-        fsStates[8].pathToRoot = fsStates[3];
+        states[8].nextState = new FiniteState[4];
+        states[8].nextState[0] = states[3];
+        states[8].nextState[1] = states[4];
+        states[8].nextState[2] = states[5];
+        states[8].nextState[3] = states[6];
+        states[8].dStateProb = new double[4];
+        states[8].dStateProb[0] = 0.2;
+        states[8].dStateProb[1] = 0.1;
+        states[8].dStateProb[2] = 0.5;
+        states[8].dStateProb[3] = 0.2;
+        states[8].pathToRoot = states[3];
 
-        fsStates[9].nextState = new FiniteState[4];
-        fsStates[9].nextState[0] = fsStates[7];
-        fsStates[9].nextState[1] = fsStates[8];
-        fsStates[9].nextState[2] = fsStates[9];
-        fsStates[9].nextState[3] = fsStates[10];
-        fsStates[9].dStateProb = new double[4];
-        fsStates[9].dStateProb[0] = 0.17;
-        fsStates[9].dStateProb[1] = 0.17;
-        fsStates[9].dStateProb[2] = 0.5;
-        fsStates[9].dStateProb[3] = 0.16;
-        fsStates[9].pathToRoot = fsStates[7];
+        states[9].nextState = new FiniteState[4];
+        states[9].nextState[0] = states[7];
+        states[9].nextState[1] = states[8];
+        states[9].nextState[2] = states[9];
+        states[9].nextState[3] = states[10];
+        states[9].dStateProb = new double[4];
+        states[9].dStateProb[0] = 0.17;
+        states[9].dStateProb[1] = 0.17;
+        states[9].dStateProb[2] = 0.5;
+        states[9].dStateProb[3] = 0.16;
+        states[9].pathToRoot = states[7];
 
-        fsStates[10].nextState = new FiniteState[3];
-        fsStates[10].nextState[0] = fsStates[11];
-        fsStates[10].nextState[1] = fsStates[12];
-        fsStates[10].nextState[2] = fsStates[13];
-        fsStates[10].dStateProb = new double[3];
-        fsStates[10].dStateProb[0] = 0.2;
-        fsStates[10].dStateProb[1] = 0.3;
-        fsStates[10].dStateProb[2] = 0.5;
-        fsStates[10].pathToRoot = fsStates[11];
+        states[10].nextState = new FiniteState[3];
+        states[10].nextState[0] = states[11];
+        states[10].nextState[1] = states[12];
+        states[10].nextState[2] = states[13];
+        states[10].dStateProb = new double[3];
+        states[10].dStateProb[0] = 0.2;
+        states[10].dStateProb[1] = 0.3;
+        states[10].dStateProb[2] = 0.5;
+        states[10].pathToRoot = states[11];
 
-        fsStates[11].nextState = new FiniteState[4];
-        fsStates[11].nextState[0] = fsStates[7];
-        fsStates[11].nextState[1] = fsStates[8];
-        fsStates[11].nextState[2] = fsStates[9];
-        fsStates[11].nextState[3] = fsStates[10];
-        fsStates[11].dStateProb = new double[4];
-        fsStates[11].dStateProb[0] = 0.2;
-        fsStates[11].dStateProb[1] = 0.2;
-        fsStates[11].dStateProb[2] = 0.5;
-        fsStates[11].dStateProb[3] = 0.1;
-        fsStates[11].pathToRoot = fsStates[7];
+        states[11].nextState = new FiniteState[4];
+        states[11].nextState[0] = states[7];
+        states[11].nextState[1] = states[8];
+        states[11].nextState[2] = states[9];
+        states[11].nextState[3] = states[10];
+        states[11].dStateProb = new double[4];
+        states[11].dStateProb[0] = 0.2;
+        states[11].dStateProb[1] = 0.2;
+        states[11].dStateProb[2] = 0.5;
+        states[11].dStateProb[3] = 0.1;
+        states[11].pathToRoot = states[7];
 
-        fsStates[12].nextState = new FiniteState[4];
-        fsStates[12].nextState[0] = fsStates[3];
-        fsStates[12].nextState[1] = fsStates[4];
-        fsStates[12].nextState[2] = fsStates[5];
-        fsStates[12].nextState[3] = fsStates[6];
-        fsStates[12].dStateProb = new double[4];
-        fsStates[12].dStateProb[0] = 0.2;
-        fsStates[12].dStateProb[1] = 0.2;
-        fsStates[12].dStateProb[2] = 0.5;
-        fsStates[12].dStateProb[3] = 0.1;
-        fsStates[12].pathToRoot = fsStates[3];
+        states[12].nextState = new FiniteState[4];
+        states[12].nextState[0] = states[3];
+        states[12].nextState[1] = states[4];
+        states[12].nextState[2] = states[5];
+        states[12].nextState[3] = states[6];
+        states[12].dStateProb = new double[4];
+        states[12].dStateProb[0] = 0.2;
+        states[12].dStateProb[1] = 0.2;
+        states[12].dStateProb[2] = 0.5;
+        states[12].dStateProb[3] = 0.1;
+        states[12].pathToRoot = states[3];
 
-        fsStates[13].nextState = new FiniteState[3];
-        fsStates[13].nextState[0] = fsStates[11];
-        fsStates[13].nextState[1] = fsStates[12];
-        fsStates[13].nextState[2] = fsStates[13];
-        fsStates[13].dStateProb = new double[3];
-        fsStates[13].dStateProb[0] = 0.25;
-        fsStates[13].dStateProb[1] = 0.25;
-        fsStates[13].dStateProb[2] = 0.5;
-        fsStates[13].pathToRoot = fsStates[11];
+        states[13].nextState = new FiniteState[3];
+        states[13].nextState[0] = states[11];
+        states[13].nextState[1] = states[12];
+        states[13].nextState[2] = states[13];
+        states[13].dStateProb = new double[3];
+        states[13].dStateProb[0] = 0.25;
+        states[13].dStateProb[1] = 0.25;
+        states[13].dStateProb[2] = 0.5;
+        states[13].pathToRoot = states[11];
 
 
     }
@@ -349,13 +305,13 @@ public class Core {
         {
             rc = (max+min)/2;
 
-            System.out.println("Starting calibration");
+            //System.out.println("Starting calibration");
             long lNanoTime = System.nanoTime();
 
             //Perform 20 loops
             //Initializes the game status booleans
-            bGameQuit = false;
-            bGameInProgress = false;
+            //bGameQuit = false;
+            gameInProgress = false;
 
             for(int i = 0; i < 20; i++)
             {
@@ -369,44 +325,34 @@ public class Core {
                     gameRunTime++;
 
                     //If we must update the game status
-                    if(gameRunTime%gameMaxRunTime == 0 && bGameInProgress == true)
+                    if(gameRunTime%gameMaxRunTime == 0 && gameInProgress)
                     {
 
                         //Move the cars according to their speed, acceleration and to the pressed keys (for player car only)
-                        moveCars(UP_P, DO_P, LE_P, RI_P, vCars);
+                        moveCars();
 
                         //Manage the collisions (the finish line is a CollidableRectangle, so it also tells whether the game must end soon)
-                        bGameFinishing = manageCollisions(vCars, vTabObstacles, bGameFinishing);
-
-                        //Re-initialize the vectors for display rectangles
-                        vDisplayRoad = new Vector<Rectangle>();
-                        vDisplayObstacles = new Vector<Rectangle>();
-                        vDisplayCars = new Vector<Rectangle>();
+                        manageCollisions();
 
                         //Find the rectangles to display according to the car speed and position
-                        findDisplayRectangles(vTabRoad, vTabObstacles, vCars, vDisplayRoad, vDisplayObstacles, vDisplayCars);
+                        findDisplayRectangles();
 
                         //Get position (rank)
-                        if(!bGameFinishing)
+                        if(!gameFinishing)
                         {
-                            int pos = 1;
-                            int ypos = (int)vCars.elementAt(0).y;
-                            Iterator<Car> iCars = vCars.iterator();
-                            Car temp = iCars.next(); //Skip first car (player car)
-                            if(temp.bustedTime > 0)
-                                temp.bustedTime--;
-                            while(iCars.hasNext())
-                            {
-                                Car currentCar = iCars.next();
-                                if(currentCar.Racer)
-                                {
-                                    if(currentCar.y < ypos)
+                            for(int j = 0; j < playersCount; j++) {
+                                Player myCar = (Player) cars.elementAt(j);
+                                int pos = 1;
+                                int ypos = (int) myCar.y;
+
+                                for (Car currentCar : cars) {
+                                    if ((currentCar.Racer || currentCar instanceof Player) && currentCar != myCar && currentCar.y < ypos)
                                         pos++;
+                                    if (currentCar.bustedTime > 0)
+                                        currentCar.bustedTime--;
                                 }
-                                if(currentCar.bustedTime > 0)
-                                    currentCar.bustedTime--;
+                                myCar.setPosition(pos);
                             }
-                            iFinalPosition = pos;
                         }
 
                     }
@@ -415,8 +361,11 @@ public class Core {
                     if(runTime == 20)
                     {
                         runTime = 0;
-                        if(bGameInProgress == true)
-                            score+=Math.pow(vCars.elementAt(0).ySpeed, 2);
+                        if(gameInProgress)
+                            for(int j = 0; j < playersCount; j++){
+                                Player myCar = (Player) cars.elementAt(j);
+                                myCar.setScore(myCar.getScore() + (int)Math.pow(myCar.ySpeed, 2));
+                            }
                     }
                 }
                 catch(Exception e)
@@ -429,7 +378,7 @@ public class Core {
             long lNanoTime2 = System.nanoTime();
             long diff = lNanoTime2 - lNanoTime;
 
-            System.out.println("Calibration : " + diff + ", rc = " + rc);
+            //System.out.println("Calibration : " + diff + ", rc = " + rc);
 
             if(diff > 500000000)
                 max = rc;
@@ -450,86 +399,105 @@ public class Core {
      */
     public void runGame()
     {
+        connectedPlayersCount = playersCount;
         //Initialize the finite state machine
         initFiniteStateMachine();
 
         //Generates the road, obstacles and cars
         newGrid();
 
-        iTickDelay = computeTickValueForCurrentSystem();
+        tickDelay = computeTickValueForCurrentSystem();
 
-        try {
-            gui.setPlayButtonEnabled(true);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        for(int i = 0; i < playersCount; i++)
+            ((Player) cars.elementAt(i)).setPlayButtonEnabled(true);
+
 
         //Initializes the game status booleans
-        bGameQuit = false;
-        bGameInProgress = false;
+        //bGameQuit = false;
+        gameInProgress = false;
+
 
         //While the GUI did not ask for closure
-        while(bGameQuit == false)
+        while(connectedPlayersCount > 0)
         {
+            connectedPlayersCount = 0;
+            for (int i = 0; i < playersCount; i++)
+                if(((Player) cars.elementAt(i)).isConnected())
+                    connectedPlayersCount++;
             try
             {
                 //Wait for a tick
-                Thread.sleep(iTickDelay);
+                Thread.sleep(tickDelay);
 
                 //Count this new tick
                 runTime++;
                 gameRunTime++;
 
+                //Sets game in progress if all players are ready to start
+                if(!gameInProgress) {
+                    gameInProgress = true;
+                    for (int i = 0; i < playersCount && gameInProgress; i++)
+                        gameInProgress = ((Player) cars.elementAt(i)).isReadyToStart() && !((Player) cars.elementAt(i)).isFinishLineCrossed();
+                }
+
                 //If we must update the game status
-                if(gameRunTime%gameMaxRunTime == 0 && bGameInProgress == true)
+                if(gameRunTime%gameMaxRunTime == 0 && gameInProgress)
                 {
 
                     //Move the cars according to their speed, acceleration and to the pressed keys (for player car only)
-                    moveCars(UP_P, DO_P, LE_P, RI_P, vCars);
+                    moveCars();
 
                     //Manage the collisions (the finish line is a CollidableRectangle, so it also tells whether the game must end soon)
-                    bGameFinishing = manageCollisions(vCars, vTabObstacles, bGameFinishing);
+                    manageCollisions();
 
-                    //Re-initialize the vectors for display rectangles
-                    vDisplayRoad = new Vector<Rectangle>();
-                    vDisplayObstacles = new Vector<Rectangle>();
-                    vDisplayCars = new Vector<Rectangle>();
+                    gameFinishing = true;
+                    for(int i = 0; i < playersCount && gameFinishing; i++)
+                        gameFinishing = ((Player) cars.elementAt(i)).isFinishLineCrossed();
 
                     //Find the rectangles to display according to the car speed and position
-                    findDisplayRectangles(vTabRoad, vTabObstacles, vCars, vDisplayRoad, vDisplayObstacles, vDisplayCars);
+                    findDisplayRectangles();
 
                     //Get position (rank)
-                    if(!bGameFinishing)
+                    if(!gameFinishing)
                     {
-                        int pos = 1;
-                        int ypos = (int)vCars.elementAt(0).y;
-                        Iterator<Car> iCars = vCars.iterator();
-                        Car temp = iCars.next(); //Skip first car (player car)
-                        if(temp.bustedTime > 0)
-                            temp.bustedTime--;
-                        while(iCars.hasNext())
-                        {
-                            Car currentCar = iCars.next();
-                            if(currentCar.Racer)
-                            {
-                                if(currentCar.y < ypos)
+                        for(int j = 0; j < playersCount; j++) {
+                            Player myCar = (Player) cars.elementAt(j);
+                            int pos = 1;
+                            int ypos = (int) myCar.y;
+
+                            for (Car currentCar : cars) {
+                                if ((currentCar.Racer || currentCar instanceof Player) && currentCar != myCar && currentCar.y < ypos)
                                     pos++;
+                                if (currentCar.bustedTime > 0)
+                                    currentCar.bustedTime--;
                             }
-                            if(currentCar.bustedTime > 0)
-                                currentCar.bustedTime--;
+                            myCar.setPosition(pos);
                         }
-                        iFinalPosition = pos;
                     }
 
-                    gui.update(vDisplayRoad, vDisplayObstacles, vDisplayCars, vCars.elementAt(0), iFinalPosition, iNbParticipants, bGameFinishing, sFinalPosition);
+                    for(int i = 0; i < playersCount; i++)
+                        ((Player) cars.elementAt(i)).update(nbParticipants);
+
+                    //???
+                    if(gameFinishing){
+                        newGrid();
+                        for(int i = 0; i < playersCount; i++) {
+                            Player p = ((Player) cars.elementAt(i));
+                            p.setReadyToStart(false);
+                            p.setFinishLineCrossed(false);
+                        }
+                    }
                 }
 
                 //The score updates every second if the game is running by adding the square of the current player car speed
                 if(runTime == 20)
                 {
                     runTime = 0;
-                    if(bGameInProgress == true)
-                        score+=Math.pow(vCars.elementAt(0).ySpeed, 2);
+                    if(gameInProgress)
+                        for(int j = 0; j < playersCount; j++) {
+                            Player myCar = (Player) cars.elementAt(j);
+                            myCar.setScore(myCar.getScore() + (int)Math.pow(myCar.ySpeed, 2));
+                        }
                 }
             }
             catch(Exception e)
@@ -542,186 +510,130 @@ public class Core {
 
     /**
      * Manages the collisions
-     * @param Cars The vector of cars (which are the actors of the collision)
-     * @param vTabObstacles The vector of obstacles (which are passively collided). Also contains the cars
-     * @param bGameFinishing True if the finish line has been passed
      * @return True if the finish line has just been passed. False otherwise
      */
-    public boolean manageCollisions(Vector<Car> Cars, Vector<CollidableRectangle>[] vTabObstacles, boolean bGameFinishing)
+    public void manageCollisions()
     {
-        //Is the finish line been passed?
-        boolean bgf = bGameFinishing;
-
         //For each Car
-        Iterator<Car> iCar = vCars.iterator();
-        while(iCar.hasNext())
-        {
-            //Current car of the loop
-            Car myCar = iCar.next();
-
+        for (Car myCar : cars) {
             //In which section am I?
-            int iSector = (int)myCar.y/400;
-            if(iSector < 1)
+            int iSector = (int) myCar.y / 400;
+            if (iSector < 1)
                 iSector = 1;
-            else if(iSector >= 107)
+            else if (iSector >= 107)
                 iSector = 106;
 
             //Generate the vector of obstacles which can be hit by the current car
-            Vector<CollidableRectangle> vCloseObstacles = new Vector<CollidableRectangle>(vTabObstacles[iSector-1]);
-            vCloseObstacles.addAll(vTabObstacles[iSector]);
-            vCloseObstacles.addAll(vTabObstacles[iSector+1]);
+            Vector<CollidableRectangle> vCloseObstacles = new Vector<>(tabObstacles[iSector - 1]);
+            vCloseObstacles.addAll(tabObstacles[iSector]);
+            vCloseObstacles.addAll(tabObstacles[iSector + 1]);
 
             //Also add the cars
-            vCloseObstacles.addAll(vTabObstacles[108]);
+            vCloseObstacles.addAll(tabObstacles[108]);
 
             //For each obstacle
-            Iterator<CollidableRectangle> iObstacles = vCloseObstacles.iterator();
-            while(iObstacles.hasNext())
-            {
+            for (CollidableRectangle currentObstacle : vCloseObstacles) {
                 //Current obstacle
-                CollidableRectangle currentObstacle = iObstacles.next();
-
                 //Find the intersection between the current car and the current obstacle
                 Rectangle rInter = findIntersection(myCar, currentObstacle);
 
                 //If there is an intersection
-                if(rInter != null)
-                {
+                if (rInter != null) {
                     //Switch from relative position to absolute position (on the y-axis)
                     rInter.y += myCar.y;
 
-                    if(currentObstacle.effect == 3 && myCar.id == 6)
-                    {
+                    if (currentObstacle.effect == 3 && myCar instanceof Player) {
                         //The player just passed the finish line
-                        if(!bgf)
-                        {
-                            bgf = true;
-
-                            //Update the String representation of the rank
-                            if(iFinalPosition == 1)
-                            {
-                                sFinalPosition = "1st";
-                            }
-                            else if(iFinalPosition == 2)
-                            {
-                                sFinalPosition = "2nd";
-                            }
-                            else if(iFinalPosition == 3)
-                            {
-                                sFinalPosition = "3rd";
-                            }
-                            else
-                            {
-                                sFinalPosition = new String(iFinalPosition+"th");
-                            }
-                        }
-
-                    }
-                    else if(currentObstacle.effect == 4)
-                    {
+                        ((Player)myCar).setFinishLineCrossed(true);
+                        ((Player)myCar).setReadyToStart(false);
+                    } else if (currentObstacle.effect == 4) {
                         //One car hit the flash zone. The flash is set to be active at 3.6 (thus 180 Km/h)
                         // in such a way that only the player car can be busted (or another car if pushed by the player)
-                        if(myCar.ySpeed >= 3.6)
-                        {
+                        if (myCar.ySpeed >= 3.6) {
                             //This car is busted for 5 seconds
                             myCar.bustedTime = 100;
-                            myCar.bustedSpeed = (int)(myCar.ySpeed*50);
+                            myCar.bustedSpeed = (int) (myCar.ySpeed * 50);
 
                             //We put this car behing the police car and prevent it for moving during the 5 second penalty
-                            myCar.y = policePos+64;
+                            myCar.y = policePos + 64;
                             myCar.x = 292;
                             myCar.xSpeed = 0;
                             myCar.xAcc = 0;
                             myCar.ySpeed = 0;
-                            if(myCar.id == 6)
-                            {
-                                LE_P = false;
-                                RI_P = false;
+                            if (myCar instanceof Player) {
+                                ((Player) myCar).setLeftPressed(false);
+                                ((Player) myCar).setRightPressed(false);
                             }
                         }
-                    }
-                    else if(currentObstacle.effect == 2)
-                    {
+                    } else if (currentObstacle.effect == 2) {
                         //The car is slowed down (by the grass)
-                        myCar.ySpeed = myCar.ySpeed*0.97;
-                    }
-                    else if(currentObstacle.effect == 1)
-                    {
+                        myCar.ySpeed = myCar.ySpeed * 0.97;
+                    } else if (currentObstacle.effect == 1) {
                         //The car hit a movable obstacle (another car)
                         //Check that the two cars are different
-                        if(!myCar.equals(currentObstacle))
-                        {
+                        if (!myCar.equals(currentObstacle)) {
                             //Find the places where the car hit the obstacle
-                            boolean[] bHitPlace = findHitPlace(myCar,rInter);
+                            boolean[] bHitPlace = findHitPlace(myCar, rInter);
 
                             //We hit on the front part. We transfer the speed on the y axis to the obstacle and reversely then we move the car a bit backwards
-                            if(bHitPlace[1] == true)
-                            {
-                                if(myCar.ySpeed > ((Car)currentObstacle).ySpeed)
-                                {
+                            if (bHitPlace[1]) {
+                                if (myCar.ySpeed > ((Car) currentObstacle).ySpeed) {
                                     double temp = myCar.ySpeed;
-                                    myCar.ySpeed = ((Car)currentObstacle).ySpeed;
-                                    ((Car)currentObstacle).ySpeed = temp;
+                                    myCar.ySpeed = ((Car) currentObstacle).ySpeed;
+                                    ((Car) currentObstacle).ySpeed = temp;
                                 }
                                 myCar.y += rInter.height;
                             }
 
                             //We hit on the plain left or plain right. We transfer the speed on the x axis to the obstacle and reversely then we move the car a bit to the opposite direction
-                            else if(bHitPlace[3] == true || bHitPlace[5] == true)
-                            {
+                            else if (bHitPlace[3] || bHitPlace[5]) {
                                 double temp = myCar.xSpeed;
-                                myCar.xSpeed = ((Car)currentObstacle).xSpeed;
-                                ((Car)currentObstacle).xSpeed = temp;
-                                if(bHitPlace[3] == true)
+                                myCar.xSpeed = ((Car) currentObstacle).xSpeed;
+                                ((Car) currentObstacle).xSpeed = temp;
+                                if (bHitPlace[3])
                                     myCar.x += rInter.width;
                                 else
                                     myCar.x -= rInter.width;
                             }
 
                             //We only hit on a top corner. We do both the above
-                            else if(bHitPlace[0] == true || bHitPlace[2] == true)
-                            {
-                                if(myCar.ySpeed > ((Car)currentObstacle).ySpeed)
-                                {
+                            else if (bHitPlace[0] || bHitPlace[2]) {
+                                if (myCar.ySpeed > ((Car) currentObstacle).ySpeed) {
                                     double temp = myCar.ySpeed;
-                                    myCar.ySpeed = ((Car)currentObstacle).ySpeed;
-                                    ((Car)currentObstacle).ySpeed = temp;
+                                    myCar.ySpeed = ((Car) currentObstacle).ySpeed;
+                                    ((Car) currentObstacle).ySpeed = temp;
                                 }
                                 double temp = myCar.xSpeed;
-                                myCar.xSpeed = ((Car)currentObstacle).xSpeed;
-                                ((Car)currentObstacle).xSpeed = temp;
+                                myCar.xSpeed = ((Car) currentObstacle).xSpeed;
+                                ((Car) currentObstacle).xSpeed = temp;
                                 myCar.y += rInter.height;
-                                if(bHitPlace[0] == true)
+                                if (bHitPlace[0])
                                     myCar.x += rInter.width;
                                 else
                                     myCar.x -= rInter.width;
                             }
                         }
-                    }
-                    else if(currentObstacle.effect == 0)
-                    {
+                    } else if (currentObstacle.effect == 0) {
                         //The car hit an obstacle that cannot move
                         //Find the places where the car hit the obstacle
-                        boolean[] bHitPlace = findHitPlace(myCar,rInter);
+                        boolean[] bHitPlace = findHitPlace(myCar, rInter);
 
                         //We hit on the front part. The car will stop immediately.
-                        if(bHitPlace[1] == true)
-                        {
+                        if (bHitPlace[1]) {
                             myCar.ySpeed = 0;
                             myCar.y += rInter.height;
                         }
 
                         //We hit on the sides
-                        else if(bHitPlace[0] == true || bHitPlace[2] == true || bHitPlace[3] == true || bHitPlace[5] == true)
-                        {
+                        else if (bHitPlace[0] || bHitPlace[2] || bHitPlace[3] || bHitPlace[5]) {
                             //If we hit on the top corners, we slow down a bit more than if we hit on the plain sides
-                            if(bHitPlace[0] == true || bHitPlace[2] == true)
-                                myCar.ySpeed = myCar.ySpeed*0.95;
+                            if (bHitPlace[0] || bHitPlace[2])
+                                myCar.ySpeed = myCar.ySpeed * 0.95;
                             else
-                                myCar.ySpeed = myCar.ySpeed*0.97;
+                                myCar.ySpeed = myCar.ySpeed * 0.97;
 
                             //We move the car to the opposite direction
-                            if(bHitPlace[0] == true || bHitPlace[3] == true)
+                            if (bHitPlace[0] || bHitPlace[3])
                                 myCar.x += rInter.width;
                             else
                                 myCar.x -= rInter.width;
@@ -731,8 +643,6 @@ public class Core {
                 }
             }
         }
-
-        return bgf;
     }
 
     /**
@@ -767,168 +677,144 @@ public class Core {
     }
 
     /**
-     * Moves the cars according to their speed, acceleration and key pressed for the player's car
-     * @param UP_P True if the up arrow is being pressed
-     * @param DO_P True if the down arrow is being pressed
-     * @param LE_P True if the left arrow is being pressed
-     * @param RI_P True if the right arrow is being pressed
-     * @param vCars The vector of cars to move
+     * Moves the cars according to their speed, acceleration and key pressed for the players cars
      */
-    public void moveCars(boolean UP_P, boolean DO_P, boolean LE_P, boolean RI_P, Vector<Car> vCars)
+    public void moveCars()
     {
-        //Extract the player's car (always at position 0 in the vector!)
-        Car myCar = vCars.elementAt(0);
 
-        //If we did not pass the finish line, we can still act on the acceleration on the y axis
-        if(!bGameFinishing)
-        {
-            if(UP_P)
+        for(int i = 0; i < playersCount; i++){
+            Player myCar = (Player)cars.elementAt(i);
+            //If we did not pass the finish line, we can still act on the acceleration on the y axis
+            if(!gameFinishing && !myCar.isFinishLineCrossed())
             {
-                //Accelerates
-                if(myCar.yAcc < 4)
-                    myCar.yAcc++;
-            }
-            else if(DO_P)
-            {
-                //Decelerates
-                if(myCar.yAcc > -8)
-                    myCar.yAcc--;
+                if(myCar.isUpKeyPressed())
+                {
+                    //Accelerates
+                    if(myCar.yAcc < 4)
+                        myCar.yAcc++;
+                }
+                else if(myCar.isDownKeyPressed())
+                {
+                    //Decelerates
+                    if(myCar.yAcc > -8)
+                        myCar.yAcc--;
+                }
+                else
+                {
+                    //Iteratively reachs a constant deceleration of -1 if no key is pressed
+                    if(myCar.yAcc > -1)
+                        myCar.yAcc--;
+                    else if(myCar.yAcc < -1)
+                        myCar.yAcc++;
+                }
             }
             else
             {
-                //Iteratively reachs a constant deceleration of -1 if no key is pressed
-                if(myCar.yAcc > -1)
-                    myCar.yAcc--;
-                else if(myCar.yAcc < -1)
-                    myCar.yAcc++;
+                //If we passed the finish line, we must decelerate
+                myCar.yAcc = -8;
             }
-        }
-        else
-        {
-            //If we passed the finish line, we must decelerate
-            myCar.yAcc = -8;
-        }
 
-        //Impacts the acceleration of the x axis
-        if(RI_P)
-        {
-            //Going to the right
-            if(myCar.xAcc < 4)
-                myCar.xAcc++;
-        }
-        else if(LE_P)
-        {
-            //Going to the left
-            if(myCar.xAcc > -4)
-                myCar.xAcc--;
-        }
-        else
-        {
-            //If we don't press anything, the x acceleration is calculated to iteratively counter the x speed and make it reach 0
-            if(myCar.xSpeed > 1)
+            //Impacts the acceleration of the x axis
+            if(myCar.isRightKeyPressed())
             {
-                myCar.xAcc = -(int)(myCar.xSpeed+1);
-                if(myCar.xAcc < -4)
-                    myCar.xAcc = -4;
+                //Going to the right
+                if(myCar.xAcc < 4)
+                    myCar.xAcc++;
             }
-            else if(myCar.xSpeed < -1)
+            else if(myCar.isLeftKeyPressed())
             {
-                myCar.xAcc = -(int)(myCar.xSpeed-1);
-                if(myCar.xAcc > 4)
-                    myCar.xAcc = 4;
+                //Going to the left
+                if(myCar.xAcc > -4)
+                    myCar.xAcc--;
             }
             else
             {
-                myCar.xAcc = 0;
-                myCar.xSpeed = 0;
+                //If we don't press anything, the x acceleration is calculated to iteratively counter the x speed and make it reach 0
+                if(myCar.xSpeed > 1)
+                {
+                    myCar.xAcc = -(int)(myCar.xSpeed+1);
+                    if(myCar.xAcc < -4)
+                        myCar.xAcc = -4;
+                }
+                else if(myCar.xSpeed < -1)
+                {
+                    myCar.xAcc = -(int)(myCar.xSpeed-1);
+                    if(myCar.xAcc > 4)
+                        myCar.xAcc = 4;
+                }
+                else
+                {
+                    myCar.xAcc = 0;
+                    myCar.xSpeed = 0;
+                }
             }
         }
 
         //We then scan the other cars
-        Iterator<Car> iCars = vCars.iterator();
-        while(iCars.hasNext())
-        {
-            Car currentCar = iCars.next();
-
+        for (Car currentCar : cars) {
             //If this is not the player's car
-            if(currentCar.id != 6)
-            {
+            if (!(currentCar instanceof Player)) {
                 //We try to maintain the x speed to 0 using the same formula
-                if(currentCar.xSpeed > 1)
-                {
-                    currentCar.xAcc = -(int)(currentCar.xSpeed+1);
-                }
-                else if(currentCar.xSpeed < -1)
-                {
-                    currentCar.xAcc = -(int)(currentCar.xSpeed-1);
-                }
-                else
-                {
+                if (currentCar.xSpeed > 1) {
+                    currentCar.xAcc = -(int) (currentCar.xSpeed + 1);
+                } else if (currentCar.xSpeed < -1) {
+                    currentCar.xAcc = -(int) (currentCar.xSpeed - 1);
+                } else {
                     currentCar.xAcc = 0;
                     currentCar.xSpeed = 0;
                 }
+
             }
 
             //The speed on the y axis is updated according to the acceleration
-            currentCar.ySpeed += (double)currentCar.yAcc/100;
+            currentCar.ySpeed += (double) currentCar.yAcc / 100;
 
             //We try to maintain the car speed in its acceptable range of functionning
-            if(currentCar.ySpeed < 0.5)
-            {
+            if (currentCar.ySpeed < 0.5) {
                 //The car must have at least a speed of 0.5
-                if(!bGameFinishing)
-                {
+                if (!gameFinishing) {
                     currentCar.ySpeed = 0.5;
-                }
-                else
-                {
+                } else {
                     //Unless the player passes the finish line which, at this point, stops the game
-                    if(currentCar.id == 6)
-                    {
+                    if (currentCar.id == 6) {
                         currentCar.ySpeed = 0;
-                        bGameInProgress = false;
-                    }
-                    else
-                    {
+                        gameInProgress = false;
+                    } else {
                         currentCar.ySpeed = 0.5;
                     }
                 }
             }
             //The opponents will try to stay at 3.58
-            else if(currentCar.ySpeed > 3.5 && currentCar.Racer && currentCar.id == 7)
-            {
-                currentCar.ySpeed = (currentCar.ySpeed - 3.5)*0.8 + 3.5;
+            else if (currentCar.ySpeed > 3.5 && currentCar.Racer && currentCar.id == 7) {
+                currentCar.ySpeed = (currentCar.ySpeed - 3.5) * 0.8 + 3.5;
             }
             //The player car cannot exceed a speed of 4.64
-            else if(currentCar.ySpeed > 4.5 && currentCar.Racer && currentCar.id == 6)
-                currentCar.ySpeed = (currentCar.ySpeed - 4.5)*0.8 + 4.5;
-                //The civilans will try to stay at 2.04
-            else if(currentCar.ySpeed > 2 && !currentCar.Racer)
-                currentCar.ySpeed = (currentCar.ySpeed - 2)*0.8 + 2;
-
+            else if (currentCar.ySpeed > 4.5 && currentCar.Racer && currentCar.id == 6)
+                currentCar.ySpeed = (currentCar.ySpeed - 4.5) * 0.8 + 4.5;
+                //The civilians will try to stay at 2.04
+            else if (currentCar.ySpeed > 2 && !currentCar.Racer)
+                currentCar.ySpeed = (currentCar.ySpeed - 2) * 0.8 + 2;
 
             //The speed on the x axis is updated with the acceleration
-            currentCar.xSpeed += (double)currentCar.xAcc/5;
+            currentCar.xSpeed += (double) currentCar.xAcc / 5;
 
             //The speed will stay in a certain range [-8,8]
-            if(currentCar.xSpeed > 8)
+            if (currentCar.xSpeed > 8)
                 currentCar.xSpeed = 8;
-            if(currentCar.xSpeed < -8)
+            if (currentCar.xSpeed < -8)
                 currentCar.xSpeed = -8;
 
             //We update the car position according to its speeds
-            currentCar.y -= currentCar.ySpeed*4;
+            currentCar.y -= currentCar.ySpeed * 4;
             currentCar.x += currentCar.xSpeed;
 
             //But the position of the car must be in the range [0,368]
-            if(currentCar.x < 0)
-            {
+            if (currentCar.x < 0) {
                 currentCar.x = 0;
                 currentCar.xAcc = 0;
                 currentCar.xSpeed = 0;
             }
-            if(currentCar.x > 368)
-            {
+            if (currentCar.x > 368) {
                 currentCar.x = 368;
                 currentCar.xAcc = 0;
                 currentCar.xSpeed = 0;
@@ -936,9 +822,8 @@ public class Core {
 
             //If, for some reason, the player car did not decrease enough after the finish line, we ensure that the game will end
             //before we get out of the visible road (+ a safety margin)
-            if(bGameFinishing && currentCar.id == 6 && currentCar.y < 500)
-            {
-                bGameInProgress = false;
+            if (gameFinishing && (currentCar instanceof Player) && currentCar.y < 500) {
+                gameInProgress = false;
             }
 
         }
@@ -946,107 +831,100 @@ public class Core {
 
     /**
      * Extracts the visible rectangles to display according to the player's car position and speed
-     * @param vTabRoad The vector of road elements
-     * @param vTabObstacles The vector of obstacles
-     * @param vCars The vector of cars
-     * @param vDisplayRoad The vector of road elements to display (updated)
-     * @param vDisplayObstacles The vector of collision warning rectagles (updated)
-     * @param vDisplayCars The vector of cars to display (updated)
      */
-    public void findDisplayRectangles(Vector<Rectangle>[] vTabRoad, Vector<CollidableRectangle>[] vTabObstacles, Vector<Car> vCars,
-                                      Vector<Rectangle> vDisplayRoad, Vector<Rectangle> vDisplayObstacles, Vector<Rectangle> vDisplayCars)
+    public void findDisplayRectangles()
     {
 
-        //Where is the display window?
-        int myCarY = 0;
-        Car currentCar = vCars.elementAt(0);
-        myCarY = (int)currentCar.y;           //Position on the y axis of the car on the road
+        for(int i = 0; i < playersCount; i++) {
+            Player currentCar = (Player) cars.elementAt(i);
 
-        //Where is the car w.r.t the display according to its speed?
-        int displayCarY = (int)((4.5-currentCar.ySpeed)*50)+100;
+            int myCarY = (int)currentCar.y;           //Position on the y axis of the car on the road
 
-        //Where is the display window with respect to the road?
-        int displayBoxY = myCarY-displayCarY;
+            //Where is the car w.r.t the display according to its speed?
+            int displayCarY = (int)((4.5-currentCar.ySpeed)*50)+100;
 
-        //We construct the rectangle that represents the current view
-        Rectangle currentView = new Rectangle(0,displayBoxY,400,400,9);
+            //Where is the display window with respect to the road?
+            int displayBoxY = myCarY-displayCarY;
 
-        //In which section am I?
-        int iSector = displayBoxY/400;
-        if(iSector == 0)
-            iSector = 1;
-        else if(iSector == 107)
-            iSector = 106;
+            //We construct the rectangle that represents the current view
+            Rectangle currentView = new Rectangle(0,displayBoxY,400,400,9);
 
-        //Generate the vector of road elements which can be seen by the current car
-        Vector<Rectangle> vCloseRoad = new Vector<Rectangle>(vTabRoad[iSector-1]);
-        vCloseRoad.addAll(vTabRoad[iSector]);
-        vCloseRoad.addAll(vTabRoad[iSector+1]);
+            //In which section am I?
+            int iSector = displayBoxY/400;
+            if(iSector == 0)
+                iSector = 1;
+            else if(iSector == 107)
+                iSector = 106;
 
-        //For each road item
-        Iterator<Rectangle> iRoadElem = vCloseRoad.iterator();
-        while(iRoadElem.hasNext())
-        {
-            //If this item intersects with the display window
-            Rectangle rInter = findIntersection(currentView,iRoadElem.next());
-            if(rInter != null)
-            {
-                //We display it
-                vDisplayRoad.add(rInter);
-            }
-        }
+            //Generate the vector of road elements which can be seen by the current car
+            Vector<Rectangle> vCloseRoad = new Vector<>(tabRoad[iSector-1]);
+            vCloseRoad.addAll(tabRoad[iSector]);
+            vCloseRoad.addAll(tabRoad[iSector+1]);
 
-        //For each car
-        Iterator<Car> iCarElem = vCars.iterator();
-        while(iCarElem.hasNext())
-        {
-            //If this car intersects with the display window
-            Rectangle rInter = findIntersection(currentView,iCarElem.next());
-            if(rInter != null)
-            {
-                //We display it
-                vDisplayCars.add(rInter);
-            }
-        }
-
-        //We construct four rectangles that are on top of the display window and have a size of 100 pixels each
-        Rectangle[] upperView = new Rectangle[4];
-        upperView[0] = new Rectangle(0,displayBoxY-400,400,100,9);
-        upperView[1] = new Rectangle(0,displayBoxY-300,400,100,9);
-        upperView[2] = new Rectangle(0,displayBoxY-200,400,100,9);
-        upperView[3] = new Rectangle(0,displayBoxY-100,400,100,9);
-
-        //Which means that the sector is upper
-        iSector--;
-        if(iSector == 0)
-            iSector = 1;
-
-        //Generate the vector of obstacles which can be hit by the current car
-        Vector<CollidableRectangle> vCloseObstacles = new Vector<CollidableRectangle>(vTabObstacles[iSector-1]);
-        vCloseObstacles.addAll(vTabObstacles[iSector]);
-        vCloseObstacles.addAll(vTabObstacles[iSector+1]);
-
-        //Including the cars
-        vCloseObstacles.addAll(vTabObstacles[108]);
-
-        //For each obstacle
-        Iterator<CollidableRectangle> iObstacleElem = vCloseObstacles.iterator();
-        while(iObstacleElem.hasNext())
-        {
-            CollidableRectangle crCurrent = iObstacleElem.next();
-            for(int i = 0; i < 4; i++)
-            {
-                //If there is an intersection of one of the rectangles above the display window
-                Rectangle rInter = findIntersection(upperView[i],crCurrent);
-                if(rInter != null && rInter.id >= 5 && rInter.id != 13)
-                {
-                    //We display a red rectangle representing the danger to collide with oncoming obstable (except grass, trees and flash zones)
-                    //The closer the object is, the wider the red rectangle will be
-                    vDisplayObstacles.add(new Rectangle(rInter.x,0.0,rInter.width,i+1,10));
+            Vector<Rectangle> displayedRoad = new Vector<>();
+            //For each road item
+            for (Rectangle aVCloseRoad : vCloseRoad) {
+                //If this item intersects with the display window
+                Rectangle rInter = findIntersection(currentView, aVCloseRoad);
+                if (rInter != null) {
+                    //We display it
+                    displayedRoad.add(rInter);
                 }
             }
-        }
 
+            currentCar.setDisplayedRoad(displayedRoad);
+
+            Vector<Rectangle> displayedCars = new Vector<>();
+            //For each car
+            for (Car car : cars) {
+                //If this car intersects with the display window
+                Rectangle rInter = findIntersection(currentView, car);
+                if (rInter != null) {
+                    //We display it
+                    displayedCars.add(rInter);
+                }
+            }
+
+            currentCar.setDisplayedCars(displayedCars);
+
+            //We construct four rectangles that are on top of the display window and have a size of 100 pixels each
+            Rectangle[] upperView = new Rectangle[4];
+            upperView[0] = new Rectangle(0,displayBoxY-400,400,100,9);
+            upperView[1] = new Rectangle(0,displayBoxY-300,400,100,9);
+            upperView[2] = new Rectangle(0,displayBoxY-200,400,100,9);
+            upperView[3] = new Rectangle(0,displayBoxY-100,400,100,9);
+
+            //Which means that the sector is upper
+            iSector--;
+            if(iSector == 0)
+                iSector = 1;
+
+            //Generate the vector of obstacles which can be hit by the current car
+            Vector<CollidableRectangle> vCloseObstacles = new Vector<>(tabObstacles[iSector-1]);
+            vCloseObstacles.addAll(tabObstacles[iSector]);
+            vCloseObstacles.addAll(tabObstacles[iSector+1]);
+
+            //Including the cars
+            vCloseObstacles.addAll(tabObstacles[108]);
+
+            Vector<Rectangle> displayedObstacles = new Vector<>();
+
+            //For each obstacle
+            for (CollidableRectangle crCurrent : vCloseObstacles) {
+                for (int j = 0; j < 4; j++) {
+                    //If there is an intersection of one of the rectangles above the display window
+                    Rectangle rInter = findIntersection(upperView[j], crCurrent);
+                    if (rInter != null && rInter.id >= 5 && rInter.id != 13) {
+                        //We display a red rectangle representing the danger to collide with oncoming obstable (except grass, trees and flash zones)
+                        //The closer the object is, the wider the red rectangle will be
+                        displayedObstacles.add(new Rectangle(rInter.x, 0.0, rInter.width, j + 1, 10));
+                    }
+                }
+            }
+
+            currentCar.setDisplayedObstacles(displayedObstacles);
+
+        }
     }
 
     /**
@@ -1093,7 +971,7 @@ public class Core {
         //  - 0 means grass
         //  - 1 means road
         //  - u means the road becomes grass at the middle
-        //  - ^ means the grass becoms road at the middle
+        //  - ^ means the grass becomes road at the middle
         //  - \ means the road turns left (doubled due to character escaping)
         //  - / means the road turns right
 
@@ -1101,9 +979,9 @@ public class Core {
         int iSegmentLocation = offset/400;
 
         //Create the new vectors for this segment
-        vTabRoad[iSegmentLocation] = new Vector<Rectangle>();
+        vTabRoad[iSegmentLocation] = new Vector<>();
         Vector<Rectangle> vRoad = vTabRoad[iSegmentLocation];
-        vTabObstacles[iSegmentLocation] = new Vector<CollidableRectangle>();
+        vTabObstacles[iSegmentLocation] = new Vector<>();
         Vector<CollidableRectangle> vObstacles = vTabObstacles[iSegmentLocation];
 
         //Generate the road segment according to the selected ID
@@ -1823,36 +1701,6 @@ public class Core {
             //Les autres, juste pour débugger à son aise
             System.out.println("Noting planned for ID : " + iSegmentId);
             System.exit(1);
-            /*CollidableRectangle crTemp;
-            vRoad.add(crTemp = new CollidableRectangle(0,offset,110,400,0,2));  //Herbe à gauche
-
-            vObstacles.add(crTemp);
-            vRoad.add(crTemp = new CollidableRectangle(290,offset,110,400,0,2)); //Herbe à droite
-            vObstacles.add(crTemp);
-            vRoad.add(new Rectangle(110,offset,4,400,3)); //Bord à gauche
-            vRoad.add(new Rectangle(286,offset,4,400,3)); //Bord à droite
-            vRoad.add(new Rectangle(114,offset,172,400,1)); //Route noire
-            vRoad.add(new Rectangle(154,offset,4,400,2)); //Séparateur témoin 1
-            vRoad.add(new Rectangle(198,offset,4,400,2)); //Séparateur témoin 2
-            vRoad.add(new Rectangle(242,offset,4,400,2)); //Séparateur témoin 3
-
-            for(int i = 0; i < 10; i++)
-            {
-                vRoad.add(new Rectangle(154,offset+28+(i*40),92,12,1)); //Repasser de la route dessus
-            }
-
-
-            //Les arbres
-            for(int i = 0; i < 2; i++)
-            {
-                crTemp = new CollidableRectangle(25,offset+100+(i*200),59,64,4,0);
-                vRoad.add(crTemp);
-                vObstacles.add(crTemp);
-                crTemp = new CollidableRectangle(325,offset+100+(i*200),59,64,4,0);
-                vRoad.add(crTemp);
-                vObstacles.add(crTemp);
-
-            }*/
         }
     }
 
@@ -1868,65 +1716,65 @@ public class Core {
 
         //Initializes finite state machine
         initFiniteStateMachine();
-        FiniteState currentState = fsStates[0];
+        FiniteState currentState = states[0];
 
         //Re-initializes the vector of road elements and obstacles
-        vTabRoad = new Vector[108];
-        vTabObstacles = new Vector[109];
+        tabRoad = new Vector[108];
+        tabObstacles = new Vector[109];
 
         //Generates 100 segments of 400x400 using the finite state machine
         for(int i = 0; i < 100; i++)
         {
-            generateNextRoadSegment(vTabRoad, vTabObstacles, currentState.iId, (99-i)*400+3200);
+            generateNextRoadSegment(tabRoad, tabObstacles, currentState.iId, (99-i)*400+3200);
             currentState = currentState.nextState();
         }
 
         //The last 8 400x400 segments are generated by taking the shortest distance to the root
         for(int i = 0; i < 8; i++)
         {
-            generateNextRoadSegment(vTabRoad, vTabObstacles, currentState.iId, 3200-(i+1)*400);
+            generateNextRoadSegment(tabRoad, tabObstacles, currentState.iId, 3200-(i+1)*400);
             currentState = currentState.pathToRoot;
         }
 
         //The finish line
         CollidableRectangle crTemp = null;
-        vTabRoad[3].add(crTemp = new CollidableRectangle(0,1200,400,20,2,3));
-        vTabObstacles[3].add(crTemp);
+        tabRoad[3].add(crTemp = new CollidableRectangle(0, 1200, 400, 20, 2, 3));
+        tabObstacles[3].add(crTemp);
 
         //The cars
         //Starting with the player's car
-        vCars = new Vector<Car>();
-        crTemp = new Car(158,43100,32,64,6,1,0,0.5,0,0,true);
-        vTabObstacles[108] = new Vector<CollidableRectangle>();
-        vTabObstacles[108].add(crTemp);
-        vCars.add((Car)crTemp);
+        cars.removeIf(c -> !(c instanceof Player));
+        tabObstacles[108] = new Vector<>();
+        for(int i = 0; i < playersCount; i++)
+            tabObstacles[108].add(cars.elementAt(i));
+        //cars.add((Car) crTemp);
 
         //Civilians
         for(int i = 0; i < 30; i++)
         {
             crTemp = new Car(204,42270-i*1000,32,64,8,1,0,0,0,1,false);
-            vTabObstacles[108].add(crTemp);
-            vCars.add((Car)crTemp);
+            tabObstacles[108].add(crTemp);
+            cars.add((Car)crTemp);
         }
 
         //Competitors
-        for(int i = 0; i < 9; i++)
+        for(int i = 0; i < 10-playersCount; i++)
         {
             crTemp = new Car(160,42200-i*900,32,64,7,1,0,0,0,2,true);
-            vTabObstacles[108].add(crTemp);
-            vCars.add((Car)crTemp);
+            tabObstacles[108].add(crTemp);
+            cars.add((Car)crTemp);
         }
 
         //Count the number of participants (although, we should know it, but still)
-        Iterator<Car> iCars = vCars.iterator();
+        Iterator<Car> iCars = cars.iterator();
         iCars.next(); //Skip first car
-        iNbParticipants = 1;
+        nbParticipants = 1;
         while(iCars.hasNext())
         {
             Car currentCar = iCars.next();
             if(currentCar.Racer)
             {
-                iNbParticipants++;
+                nbParticipants++;
 
             }
         }
@@ -1936,47 +1784,63 @@ public class Core {
         {
             //Cops will be placed before the speed indicator
             int pos = (int)(Math.random()*10000)+10000;
-            vTabRoad[pos/400].add(crTemp = new CollidableRectangle(292,pos,30,64,11,0)); //Panneau 130
-            vTabObstacles[pos/400].add(crTemp);
-            vTabRoad[(pos-1000)/400].add(crTemp = new CollidableRectangle(292,pos-1000,30,64,14,0)); //Speedometer
-            vTabObstacles[(pos-1000)/400].add(crTemp);
+            tabRoad[pos/400].add(crTemp = new CollidableRectangle(292,pos,30,64,11,0)); //Panneau 130
+            tabObstacles[pos/400].add(crTemp);
+            tabRoad[(pos-1000)/400].add(crTemp = new CollidableRectangle(292, pos - 1000, 30, 64, 14, 0)); //Speedometer
+            tabObstacles[(pos-1000)/400].add(crTemp);
 
             pos = (int)(Math.random()*10000)+30000;
-            vTabRoad[pos/400].add(crTemp = new CollidableRectangle(292,pos,30,64,11,0)); //Panneau 130
-            vTabObstacles[pos/400].add(crTemp);
-            vTabRoad[(pos-1000)/400].add(crTemp = new CollidableRectangle(292,pos-1000,32,64,12,0)); //Voiture de flics
-            vTabObstacles[(pos-1000)/400].add(crTemp);
+            tabRoad[pos/400].add(crTemp = new CollidableRectangle(292, pos, 30, 64, 11, 0)); //Panneau 130
+            tabObstacles[pos/400].add(crTemp);
+            tabRoad[(pos-1000)/400].add(crTemp = new CollidableRectangle(292, pos - 1000, 32, 64, 12, 0)); //Voiture de flics
+            tabObstacles[(pos-1000)/400].add(crTemp);
             policePos = pos-1000;
-            vTabObstacles[(pos-1200)/400].add(new CollidableRectangle(0,pos-1200,400,200,13,4)); //Zone Flash
+            tabObstacles[(pos-1200)/400].add(new CollidableRectangle(0, pos - 1200, 400, 200, 13, 4)); //Zone Flash
 
         }
         else
         {
             //Speed indicator will be placed before the cops
             int pos = (int)(Math.random()*10000)+10000;
-            vTabRoad[pos/400].add(crTemp = new CollidableRectangle(292,pos,30,64,11,0)); //Panneau 130
-            vTabObstacles[pos/400].add(crTemp);
-            vTabRoad[(pos-1000)/400].add(crTemp = new CollidableRectangle(292,pos-1000,32,64,12,0)); //Voiture de flics
-            vTabObstacles[(pos-1000)/400].add(crTemp);
+            tabRoad[pos/400].add(crTemp = new CollidableRectangle(292,pos,30,64,11,0)); //Panneau 130
+            tabObstacles[pos/400].add(crTemp);
+            tabRoad[(pos-1000)/400].add(crTemp = new CollidableRectangle(292, pos - 1000, 32, 64, 12, 0)); //Voiture de flics
+            tabObstacles[(pos-1000)/400].add(crTemp);
             policePos = pos-1000;
-            vTabObstacles[(pos-1200)/400].add(new CollidableRectangle(0,pos-1200,400,200,13,4)); //Zone Flash
+            tabObstacles[(pos-1200)/400].add(new CollidableRectangle(0, pos - 1200, 400, 200, 13, 4)); //Zone Flash
 
 
             pos = (int)(Math.random()*10000)+30000;
-            vTabRoad[pos/400].add(crTemp = new CollidableRectangle(292,pos,30,64,11,0)); //Panneau 130
-            vTabObstacles[pos/400].add(crTemp);
-            vTabRoad[(pos-1000)/400].add(crTemp = new CollidableRectangle(292,pos-1000,30,64,14,0)); //Speedometer
-            vTabObstacles[(pos-1000)/400].add(crTemp);
+            tabRoad[pos/400].add(crTemp = new CollidableRectangle(292,pos,30,64,11,0)); //Panneau 130
+            tabObstacles[pos/400].add(crTemp);
+            tabRoad[(pos-1000)/400].add(crTemp = new CollidableRectangle(292, pos - 1000, 30, 64, 14, 0)); //Speedometer
+            tabObstacles[(pos-1000)/400].add(crTemp);
         }
 
     }
 
-    public void createGame() {
-        Core.score = 0;
+    @Override
+    public void run(){
+        System.out.println("Starting core");
+        this.runGame();
+        System.out.println("Ending core");
+    }
 
-        //Initisalize the grid on the server's side
-        newGrid();
-        Core.bGameFinishing = false;
-        Core.bGameInProgress = true;
+    public void addPlayer(Player p){
+        this.cars.add(0,p);
+        playersCount++;
+
+        for(int i = 0; i < playersCount; i++){
+            ((Player) cars.elementAt(i)).x = 118 + i*42;
+        }
+    }
+
+    public void removePlayer(Player p){
+        this.cars.remove(p);
+        playersCount--;
+    }
+
+    public int getPlayersCount(){
+        return playersCount;
     }
 }

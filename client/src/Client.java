@@ -13,8 +13,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
 
     public Client(String serverAddress) throws java.rmi.RemoteException {
         super();
-
-       this.serverAddress = serverAddress;
+        this.serverAddress = serverAddress;
     }
 
     public void connectToServer() {
@@ -22,7 +21,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
         try {
             server = (IServer) java.rmi.Naming.lookup(this.serverAddress);
             //give the server a remote reference to myself with which it can call me back
-            server.registerClient((IGui) java.rmi.server.RemoteObject.toStub(this));
+            this.uuid = server.registerClient((IGui) java.rmi.server.RemoteObject.toStub(this));
 
         } catch (Exception e) {
             //System.out.println("Help! " + e);
@@ -33,15 +32,6 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
     @Override
     public void setGUI(Gui gui) {
         this.gui = gui;
-    }
-
-    @Override
-    public void registerClient(IGui clientGUI){
-        try {
-            this.uuid = server.registerClient(clientGUI);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -127,9 +117,7 @@ public class Client extends UnicastRemoteObject implements IGameEngine, IGui{
                     gui.update(vDisplayRoad, vDisplayObstacles, vDisplayCars, myCar, pos, nbParticipants, bGameOver, sPosition);
                 }
             });
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
+        } catch (InterruptedException | InvocationTargetException e) {
             e.printStackTrace();
         }
     }

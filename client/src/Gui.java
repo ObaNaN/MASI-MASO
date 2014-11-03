@@ -1,9 +1,4 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
  * GUI.java
  *
  * Created on 10-juin-2013, 10:21:22
@@ -14,7 +9,6 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -145,140 +139,103 @@ public class Gui extends javax.swing.JFrame {
         try
         {
             //For each rectangle in the vector
-            Iterator<Rectangle> iDisplay = vDisplay.iterator();
-            while(iDisplay.hasNext())
-            {
-                Rectangle currentRectangle = iDisplay.next();
-                if(currentRectangle.id == 0)
-                {
+            for (Rectangle currentRectangle : vDisplay) {
+                if (currentRectangle.id == 0) {
                     //Grass land
-                    g2.setColor(new Color(34,139,34));
-                    g2.fillRect((int)currentRectangle.x, (int)currentRectangle.y, currentRectangle.width, currentRectangle.height);
-                }
-                else if(currentRectangle.id == 1)
-                {
+                    g2.setColor(new Color(34, 139, 34));
+                    g2.fillRect((int) currentRectangle.x, (int) currentRectangle.y, currentRectangle.width, currentRectangle.height);
+                } else if (currentRectangle.id == 1) {
                     //Road segment
                     g2.setColor(Color.BLACK);
-                    g2.fillRect((int)currentRectangle.x, (int)currentRectangle.y, currentRectangle.width, currentRectangle.height);
-                }
-                else if(currentRectangle.id == 2)
-                {
+                    g2.fillRect((int) currentRectangle.x, (int) currentRectangle.y, currentRectangle.width, currentRectangle.height);
+                } else if (currentRectangle.id == 2) {
                     //White separator or finish line
                     g2.setColor(Color.WHITE);
-                    g2.fillRect((int)currentRectangle.x, (int)currentRectangle.y, currentRectangle.width, currentRectangle.height);
-                }
-                else if(currentRectangle.id == 3)
-                {
+                    g2.fillRect((int) currentRectangle.x, (int) currentRectangle.y, currentRectangle.width, currentRectangle.height);
+                } else if (currentRectangle.id == 3) {
                     //Road border
                     g2.setColor(Color.GRAY);
-                    g2.fillRect((int)currentRectangle.x, (int)currentRectangle.y, currentRectangle.width, currentRectangle.height);
-                }
-                else if(currentRectangle.id == 4)
-                {
+                    g2.fillRect((int) currentRectangle.x, (int) currentRectangle.y, currentRectangle.width, currentRectangle.height);
+                } else if (currentRectangle.id == 4) {
                     //Tree
                     BufferedImage bi = ImageIO.read(this.getClass().getResource("/images/tree_orig.png"));
-                    if((int)currentRectangle.y == 0)
-                    {
+                    if ((int) currentRectangle.y == 0) {
                         //Get the displayable sub-image
-                        bi = bi.getSubimage(0, 64-currentRectangle.height, currentRectangle.width, currentRectangle.height);
+                        bi = bi.getSubimage(0, 64 - currentRectangle.height, currentRectangle.width, currentRectangle.height);
                     }
-                    g2.drawImage(bi, null, (int)currentRectangle.x, (int)currentRectangle.y);
-                }
-                else if(currentRectangle.id == 5)
-                {
+                    g2.drawImage(bi, null, (int) currentRectangle.x, (int) currentRectangle.y);
+                } else if (currentRectangle.id == 5) {
                     //Concrete block
                     BufferedImage bi = ImageIO.read(this.getClass().getResource("/images/beton.JPG"));
-                    if((int)currentRectangle.y == 0)
-                    {
+                    if ((int) currentRectangle.y == 0) {
                         //Get the displayable sub-image
-                        bi = bi.getSubimage(0, 32-currentRectangle.height, currentRectangle.width, currentRectangle.height);
+                        bi = bi.getSubimage(0, 32 - currentRectangle.height, currentRectangle.width, currentRectangle.height);
                     }
-                    g2.drawImage(bi, null, (int)currentRectangle.x, (int)currentRectangle.y);
-                }
-                else if(currentRectangle.id == 6)
-                {
+                    g2.drawImage(bi, null, (int) currentRectangle.x, (int) currentRectangle.y);
+                } else if (currentRectangle.id == 6) {
                     //Player car
                     BufferedImage bi = ImageIO.read(this.getClass().getResource("/images/simple-travel-car-top_view_scaled.png"));
-                    if((int)currentRectangle.y == 0)
-                    {
+                    if ((int) currentRectangle.y == 0) {
                         //Get the displayable sub-image
-                        bi = bi.getSubimage(0, 64-currentRectangle.height, currentRectangle.width, currentRectangle.height);
+                        bi = bi.getSubimage(0, 64 - currentRectangle.height, currentRectangle.width, currentRectangle.height);
                     }
-                    g2.drawImage(bi, null, (int)currentRectangle.x, (int)currentRectangle.y);
-                }
-                else if(currentRectangle.id == 7)
-                {
+                    g2.drawImage(bi, null, (int) currentRectangle.x, (int) currentRectangle.y);
+                } else if (currentRectangle.id == 7) {
                     //Opponent car
                     BufferedImage bi = ImageIO.read(this.getClass().getResource("/images/white-car-top-view.png"));
-                    if((int)currentRectangle.y == 0)
-                    {
+                    if ((int) currentRectangle.y == 0) {
                         //Get the displayable sub-image
-                        bi = bi.getSubimage(0, 64-currentRectangle.height, currentRectangle.width, currentRectangle.height);
+                        bi = bi.getSubimage(0, 64 - currentRectangle.height, currentRectangle.width, currentRectangle.height);
                     }
-                    g2.drawImage(bi, null, (int)currentRectangle.x, (int)currentRectangle.y);
-                }
-                else if(currentRectangle.id == 8)
-                {
+                    g2.drawImage(bi, null, (int) currentRectangle.x, (int) currentRectangle.y);
+                } else if (currentRectangle.id == 8) {
                     //Civilian car
                     BufferedImage bi = ImageIO.read(this.getClass().getResource("/images/simple-blue-car-top_view.png"));
-                    if((int)currentRectangle.y == 0)
-                    {
+                    if ((int) currentRectangle.y == 0) {
                         //Get the displayable sub-image
-                        bi = bi.getSubimage(0, 64-currentRectangle.height, currentRectangle.width, currentRectangle.height);
+                        bi = bi.getSubimage(0, 64 - currentRectangle.height, currentRectangle.width, currentRectangle.height);
                     }
-                    g2.drawImage(bi, null, (int)currentRectangle.x, (int)currentRectangle.y);
-                }
-                else if(currentRectangle.id == 10)
-                {
+                    g2.drawImage(bi, null, (int) currentRectangle.x, (int) currentRectangle.y);
+                } else if (currentRectangle.id == 10) {
                     //Red block (for collision warning)
                     g2.setColor(Color.RED);
-                    g2.fillRect((int)currentRectangle.x, (int)currentRectangle.y, currentRectangle.width, currentRectangle.height);
-                }
-                else if(currentRectangle.id == 11)
-                {
+                    g2.fillRect((int) currentRectangle.x, (int) currentRectangle.y, currentRectangle.width, currentRectangle.height);
+                } else if (currentRectangle.id == 11) {
                     //Road sign
                     BufferedImage bi = ImageIO.read(this.getClass().getResource("/images/300px-Limite_130.svg.png"));
-                    if((int)currentRectangle.y == 0)
-                    {
+                    if ((int) currentRectangle.y == 0) {
                         //Get the displayable sub-image
-                        bi = bi.getSubimage(0, 64-currentRectangle.height, currentRectangle.width, currentRectangle.height);
+                        bi = bi.getSubimage(0, 64 - currentRectangle.height, currentRectangle.width, currentRectangle.height);
                     }
-                    g2.drawImage(bi, null, (int)currentRectangle.x, (int)currentRectangle.y);
-                }
-                else if(currentRectangle.id == 12)
-                {
+                    g2.drawImage(bi, null, (int) currentRectangle.x, (int) currentRectangle.y);
+                } else if (currentRectangle.id == 12) {
                     //Police car
                     BufferedImage bi = ImageIO.read(this.getClass().getResource("/images/police_car.png"));
-                    if((int)currentRectangle.y == 0)
-                    {
+                    if ((int) currentRectangle.y == 0) {
                         //Get the displayable sub-image
-                        bi = bi.getSubimage(0, 64-currentRectangle.height, currentRectangle.width, currentRectangle.height);
+                        bi = bi.getSubimage(0, 64 - currentRectangle.height, currentRectangle.width, currentRectangle.height);
                     }
-                    g2.drawImage(bi, null, (int)currentRectangle.x, (int)currentRectangle.y);
-                }
-                else if(currentRectangle.id == 14)
-                {
+                    g2.drawImage(bi, null, (int) currentRectangle.x, (int) currentRectangle.y);
+                } else if (currentRectangle.id == 14) {
                     //Speed indicator
                     BufferedImage bi = ImageIO.read(this.getClass().getResource("/images/Speedometer.png"));
                     boolean bComplete = true;
-                    if((int)currentRectangle.y == 0)
-                    {
+                    if ((int) currentRectangle.y == 0) {
                         //Get the displayable sub-image
-                        bi = bi.getSubimage(0, 64-currentRectangle.height, currentRectangle.width, currentRectangle.height);
+                        bi = bi.getSubimage(0, 64 - currentRectangle.height, currentRectangle.width, currentRectangle.height);
                         bComplete = false;
                     }
-                    g2.drawImage(bi, null, (int)currentRectangle.x, (int)currentRectangle.y);
-                    if(bComplete)
-                    {
+                    g2.drawImage(bi, null, (int) currentRectangle.x, (int) currentRectangle.y);
+                    if (bComplete) {
                         //Display the player's speed in the speed indicator
-                        int iSpeed = (int)(myCar.ySpeed*50);
-                        String sSpeed = new String(iSpeed+"");
-                        if(iSpeed <= 130)
+                        int iSpeed = (int) (myCar.ySpeed * 50);
+                        String sSpeed = iSpeed + "";
+                        if (iSpeed <= 130)
                             g2.setColor(Color.GREEN);
                         else
                             g2.setColor(Color.RED);
                         g2.setFont(new Font("Arial", Font.BOLD, 16));
-                        g2.drawChars(sSpeed.toCharArray(), 0, sSpeed.length(), (int)currentRectangle.x+2, (int)currentRectangle.y+15);
+                        g2.drawChars(sSpeed.toCharArray(), 0, sSpeed.length(), (int) currentRectangle.x + 2, (int) currentRectangle.y + 15);
                     }
                 }
             }
@@ -339,7 +296,7 @@ public class Gui extends javax.swing.JFrame {
             refreshGrid(vDisplayCars);          //Layer 3
 
             //Display the speed in the bottom left corner
-            String sSpeed = new String((int)(Speed*50)+" Km/h");
+            String sSpeed = (int) (Speed * 50) + " Km/h";
             g2.setColor(Color.BLACK);
             g2.fillRect(5, 358, 100, 30);
             g2.setColor(Color.RED);
@@ -351,13 +308,13 @@ public class Gui extends javax.swing.JFrame {
             g2.setColor(Color.BLACK);
             g2.fillRect(290, 328, 110, 30);
             g2.setColor(Color.ORANGE);
-            int iDistance = (int)(((int)myCar.y-1200)/415);
+            int iDistance = (((int)myCar.y-1200)/415);
             if(iDistance < 0)
                 iDistance = 0;
             g2.fillRect(295, 333, iDistance , 20);
 
             //Display the position (rank) in the bottom right corner (under the distance bar)
-            String sPos = new String(pos+"/"+nbParticipants);
+            String sPos = pos + "/" + nbParticipants;
             g2.setColor(Color.BLACK);
             g2.fillRect(325, 358, 75, 30);
             g2.setColor(Color.RED);
@@ -368,7 +325,7 @@ public class Gui extends javax.swing.JFrame {
             {
                 //Display the distance to the finish line at the top
                 g2.setFont(new Font("Arial", Font.BOLD, 28));
-                String sTemp = new String((int)((myCar.y-1200)/3)+"");
+                String sTemp = (int) ((myCar.y - 1200) / 3) + "";
                 g2.drawChars(sTemp.toCharArray(), 0, sTemp.length(), 180, 30);
             }
 
@@ -378,10 +335,10 @@ public class Gui extends javax.swing.JFrame {
                 g2.setColor(Color.BLACK);
                 g2.fillRect(110, 150, 160, 60);
                 g2.setColor(Color.RED);
-                String sGameOver = new String("GAME OVER");
+                String sGameOver = "GAME OVER";
                 g2.setFont(new Font("Arial", Font.BOLD, 24));
                 g2.drawChars(sGameOver.toCharArray(), 0, sGameOver.length(), 120, 180);
-                String sGameOver2 = new String("You ranked " + sPosition + " !");
+                String sGameOver2 = "You ranked " + sPosition + " !";
                 g2.setFont(new Font("Arial", Font.BOLD, 18));
                 g2.drawChars(sGameOver2.toCharArray(), 0, sGameOver2.length(), 120, 200);
             }
@@ -395,7 +352,7 @@ public class Gui extends javax.swing.JFrame {
 
                 //Write "BUSTED" in the top right corner of the black rectangle
                 g2.setColor(Color.RED);
-                String sGameOver = new String("BUSTED!!!");
+                String sGameOver = "BUSTED!!!";
                 g2.setFont(new Font("Arial", Font.BOLD, 30));
                 g2.drawChars(sGameOver.toCharArray(), 0, sGameOver.length(), 190, 110);
 
@@ -405,22 +362,22 @@ public class Gui extends javax.swing.JFrame {
 
                 //Display the policeman speech
                 g2.setColor(Color.WHITE);
-                sGameOver = new String("\"Easy on the gas, boy!\"");
+                sGameOver = "\"Easy on the gas, boy!\"";
                 g2.setFont(new Font("Arial", Font.BOLD, 24));
                 g2.drawChars(sGameOver.toCharArray(), 0, sGameOver.length(), 60, 200);
 
                 //Display the speed
-                sGameOver = new String("You were controlled at " + myCar.bustedSpeed + " Km/h");
+                sGameOver = "You were controlled at " + myCar.bustedSpeed + " Km/h";
                 g2.setFont(new Font("Arial", Font.BOLD, 18));
                 g2.drawChars(sGameOver.toCharArray(), 0, sGameOver.length(), 60, 230);
 
                 //Display the fine
-                sGameOver = new String("You must pay $" + (50+(myCar.bustedSpeed-130)*10));
+                sGameOver = "You must pay $" + (50 + (myCar.bustedSpeed - 130) * 10);
                 g2.setFont(new Font("Arial", Font.BOLD, 18));
                 g2.drawChars(sGameOver.toCharArray(), 0, sGameOver.length(), 60, 260);
 
                 //Display the warning
-                sGameOver = new String("Watch out for traffic signs!");
+                sGameOver = "Watch out for traffic signs!";
                 g2.setFont(new Font("Arial", Font.BOLD, 18));
                 g2.drawChars(sGameOver.toCharArray(), 0, sGameOver.length(), 60, 290);
             }
@@ -454,7 +411,7 @@ public class Gui extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent evt) {
-                formWindowClosing(evt);
+                formWindowClosing();
             }
         });
         addKeyListener(new KeyAdapter() {
@@ -467,11 +424,7 @@ public class Gui extends javax.swing.JFrame {
         });
 
         jButton1.setText("Play");
-        jButton1.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
+        jButton1.addActionListener(this::jButton1ActionPerformed);
 
         jLabel1.setText("Your Score");
 
@@ -524,9 +477,8 @@ public class Gui extends javax.swing.JFrame {
 
     /**
      * Private method called when the window is closing
-     * @param evt The corresponding WindowEvent
      */
-    private void formWindowClosing(WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+    private void formWindowClosing() {//GEN-FIRST:event_formWindowClosing
         // Warn the server that we closed the GUI and that it can stop
         this.engine.close();
 

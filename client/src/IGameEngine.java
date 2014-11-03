@@ -1,8 +1,5 @@
-import java.rmi.RemoteException;
-
 public interface IGameEngine {
     public void setGUI(Gui gui);
-    public void registerClient(IGui clientGUI) throws RemoteException;
     public int getScore();
     public boolean isGameInProgress();
     public void createGame();
